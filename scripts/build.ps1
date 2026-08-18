@@ -1,3 +1,9 @@
 $ErrorActionPreference = "Stop"
-Write-Host "No project-specific build command configured yet."
-Write-Host "Adapt scripts/build.ps1 for the actual project stack."
+
+if (Test-Path ".\gradlew.bat") {
+    Write-Host "== CatBoard Android build =="
+    & .\gradlew.bat assembleDebug
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+} else {
+    Write-Host "CatBoard Android source is not imported yet; Gradle build skipped during repository bootstrap."
+}
