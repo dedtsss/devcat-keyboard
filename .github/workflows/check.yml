@@ -1,0 +1,22 @@
+name: check
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+      - name: Make scripts executable
+        run: chmod +x ./scripts/*.sh || true
+
+      - name: Run check
+        run: ./scripts/check.sh

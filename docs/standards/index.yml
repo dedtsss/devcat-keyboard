@@ -1,0 +1,82 @@
+standards:
+  project_lifecycle:
+    file: docs/standards/project-lifecycle.md
+    description: Canonical project structure, lifecycle, ideas/decisions split, durable handoff and template usage
+    use_when:
+      - new project
+      - repository structure
+      - project standard
+      - architecture
+      - major feature
+      - migration
+      - project setup
+      - handoff
+
+  engineering_principles:
+    file: docs/standards/engineering-principles.md
+    description: Solution-selection axioms: reuse before build, simplest sufficient architecture, MVP-first, evidence-first and proportional engineering
+    use_when:
+      - new project
+      - idea
+      - architecture
+      - design
+      - implementation
+      - integration
+      - workaround
+      - framework
+      - stack
+      - dependency
+      - refactor
+      - rewrite
+      - optimization
+
+  github_workflow:
+    file: docs/standards/github-workflow.md
+    description: GitHub Issues, branches, commits, pull requests, review and merge flow
+    use_when:
+      - issue
+      - pull request
+      - branch
+      - commit
+      - merge
+      - github
+      - ci
+
+  codex_runtime:
+    file: docs/standards/codex-runtime.md
+    description: How Codex should work in this repository and report results
+    use_when:
+      - codex
+      - agent
+      - implementation
+      - task execution
+
+  secrets_policy:
+    file: docs/standards/secrets-policy.md
+    description: Secrets, tokens, env files, dotenvx, API keys and credential safety
+    use_when:
+      - secret
+      - token
+      - api key
+      - env
+      - dotenvx
+      - credentials
+
+  pr_review:
+    file: docs/standards/pr-review.md
+    description: Pull request quality checklist and review expectations
+    use_when:
+      - pull request
+      - review
+      - merge
+      - checklist
+
+  testing:
+    file: docs/standards/testing.md
+    description: Test expectations, validation commands and CI requirements
+    use_when:
+      - test
+      - tests
+      - ci
+      - validation
+      - bugfix
