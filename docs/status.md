@@ -1,61 +1,84 @@
 # Project Status
 
-Version: v0.2.0  
-Date: 2026-08-16  
-Repository: `dedtsss/etalon-project-template`
+Date: 2026-08-18  
+Repository: `dedtsss/devcat-keyboard`  
+Product working name: **CatBoard**  
+Etalon baseline: v0.2.0  
+Stage: `bootstrap / architecture accepted / implementation not started`
 
 ## Current state
 
-Canonical GitHub template and project standard for new Bruce projects and for incremental standardization of existing repositories.
+The repository was created from `dedtsss/etalon-project-template`.
 
-GitHub Template Repository mode is enabled (`is_template=true`).
+Accepted direction:
 
-## Purpose
+- HeliBoard is the keyboard base;
+- Govorun/GigaAM voice recognition is embedded into the keyboard instead of running as a floating Accessibility overlay;
+- the toolbar microphone becomes a native CatBoard action;
+- local Russian ASR remains available fully offline;
+- optional online text cleanup is planned after local ASR is stable;
+- HeliBoard themes, emoji and clipboard are preserved and improved incrementally;
+- swipe typing is not a priority.
 
-Provide one repeatable project structure where:
-- GitHub is the source of truth;
-- AI agents have short operating rules;
-- important ideas and accepted decisions survive chat/context changes;
-- Issues/specs define work;
-- Pull Requests and Actions provide review/evidence;
-- scripts provide one-command checks;
-- old projects can be brought to the same baseline incrementally.
+Android product source has **not yet been imported**. Current work is repository bootstrap, durable architecture and the first implementation contract.
 
-## Required baseline
+## Accepted first architecture
 
-- `.etalon-version`
-- `README.md`
-- `AGENTS.md`
-- `CODEX.md`
-- `docs/status.md`
-- `docs/backlog.md`
-- `docs/decisions.md`
-- `docs/ideas.md`
-- `docs/standards/`
-- `docs/specs/`
-- `scripts/check.*`
-- `scripts/doctor.*`
-- `.github/`
+```text
+HeliBoard IME / CatBoard UI
+        |
+        v
+internal VoiceController
+        |
+        +-> recorder + Silero VAD
+        |
+        +-> GigaAM v3 + sherpa-onnx (offline)
+        |
+        +-> local dictionary/post-processing
+        |
+        +-> optional online cleanup companion
+        |
+        v
+InputConnection -> active Android editor
+```
 
-## Canonical lifecycle
+See:
 
-See `docs/standards/project-lifecycle.md`.
+- `docs/architecture.md`
+- `docs/voice.md`
+- `docs/privacy.md`
+- `docs/specs/2026-08-18-integrated-voice-mvp/`
 
-Core flow:
+## Known reusable work
 
-`IDEA -> PRIOR ART -> MVP/NON-GOALS/RISKS -> TEMPLATE -> ISSUE/SPEC -> PR -> TEST/REVIEW -> DURABLE HANDOFF`
+`dedtsss/govorun-online-cleaner` contains reusable reference/implementation pieces:
 
-## Known state of existing repositories
+- `OfflineTranscriber`;
+- GigaAM model management;
+- sherpa-onnx integration;
+- VAD/recording logic;
+- dictionary ideas;
+- GigaChat client/prompt cleaner work.
 
-The standard has historically been applied inconsistently. Some repositories have strong project-specific documentation and/or `AGENTS.md`; others were created without the template baseline. Existing products must be audited and standardized incrementally rather than rewritten.
+The old Accessibility overlay, floating bird and modal recognition-dialog UX are not target architecture.
 
-## Memory
+## Known risks to verify
 
-External memory is optional. GitHub and repository documents remain authoritative. Important state must not exist only in chat or an external memory service.
+1. HeliBoard currently targets a wider Android/ABI range than the existing Govorun fork. Determine the real minimum supported by sherpa-onnx/GigaAM before changing project minSdk.
+2. First internal voice build can be arm64-only, but public ABI policy remains undecided.
+3. GigaAM model size may make a public APK too large; model-pack/download/import design is later work.
+4. `InputMethodService` microphone lifecycle must be tested across focus changes, IME hide/show, app switching and interruptions.
+5. Online cleanup must have a bounded timeout and a safe local-transcript fallback.
+6. Upstream HeliBoard updates should remain reasonably mergeable; avoid unnecessary invasive rewrites.
 
-## Next steps
+## Next step
 
-1. Keep this repository as the single canonical template.
-2. Mark the older `dedtsss/etalon-repository` as a deprecated pointer.
-3. Audit active repositories against v0.2.0 and migrate them in focused non-product-changing PRs/tasks.
-4. Future repositories: create via `Use this template` by default.
+Create/execute the first product Issue from the integrated voice MVP spec:
+
+1. import a clean current HeliBoard baseline while preserving licensing/history evidence;
+2. make the upstream baseline build cleanly before voice changes;
+3. identify and replace the current external voice-IME switch path;
+4. port the minimum Govorun offline ASR stack;
+5. produce the first reviewable Android build with internal offline dictation.
+
+No public release or merge to `main` is authorized by this status document alone.
