@@ -1,14 +1,25 @@
 ## Summary
 
-What changed?
+What changed and why?
 
-## Changed files
+## Issue / spec
 
-- 
+- Issue:
+- Spec (if applicable):
+
+## Changed areas
+
+- [ ] Keyboard/UI
+- [ ] Voice/ASR
+- [ ] Online cleanup/network
+- [ ] Clipboard
+- [ ] Build/CI/dependencies
+- [ ] Docs only
+- [ ] Other
 
 ## Verification
 
-Command:
+Unified check:
 
 ```bash
 ./scripts/check.sh
@@ -17,46 +28,49 @@ Command:
 Result:
 
 - [ ] Passed
-- [ ] Failed
-- [ ] Not run, reason:
+- [ ] Failed — explained below
+- [ ] Not run — reason below
 
-## Agent harness
+Additional manual/device checks:
 
-Did this PR fix a repeatable agent mistake?
+- Device / Android:
+- What was tested:
+- What was not tested:
 
-- [ ] No
-- [ ] Yes, updated:
-  - [ ] `AGENTS.md`
-  - [ ] `CODEX.md`
-  - [ ] `scripts/`
-  - [ ] `.github/workflows/`
-  - [ ] `docs/decisions.md`
-  - [ ] `docs/status.md`
+## Privacy / permissions
 
-## Risks
+- [ ] No new permissions/network behavior
+- [ ] Permission/network behavior changed and is described below
+- [ ] No secrets/private user content added to logs or repository
+
+If voice/network changed, state explicitly:
+
+- local dictation in airplane mode tested: yes/no/not applicable;
+- keyboard APK `INTERNET` permission changed: yes/no/not applicable;
+- transcript fallback/error preservation checked: yes/no/not applicable.
+
+## Upstream / licenses
+
+For copied/upstream-derived code or binaries:
+
+- source/revision:
+- license/attribution checked:
+- dependency/model version/hash where relevant:
+
+## Risks / remaining boundaries
 
 - 
 
-## Follow-up tasks
+## Durable handoff
 
-- 
+Update only where facts changed:
 
-## AutoMem Rollout Summary
+- [ ] `docs/status.md`
+- [ ] `docs/decisions.md`
+- [ ] `docs/ideas.md`
+- [ ] relevant spec/result
+- [ ] no durable-doc update needed
 
-- Added/updated AutoMem_Bruce project memory rules.
-- Source of truth remains GitHub/repository docs.
+## Merge / release
 
-## AutoMem Rollout Checks
-
-- [ ] AGENTS.md updated
-- [ ] CODEX.md updated
-- [ ] docs/memory.md updated
-- [ ] docs/status.md memory block added/checked
-- [ ] docs/decisions.md updated
-- [ ] No confidential material added
-- [ ] Project checks passed
-
-## AutoMem Actions
-
-- [ ] Preflight recall performed
-- [ ] Post-task summary stored if needed
+This PR does not authorize merge, release, publishing or visibility changes by itself.
