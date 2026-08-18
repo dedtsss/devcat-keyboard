@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "No project-specific tests configured yet."
-echo "Adapt scripts/test.sh for the actual project stack."
+if [[ -x "./gradlew" ]]; then
+  echo "== CatBoard Android tests =="
+  ./gradlew test
+else
+  echo "CatBoard Android source is not imported yet; Gradle tests skipped during repository bootstrap."
+fi
