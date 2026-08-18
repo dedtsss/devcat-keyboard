@@ -1,32 +1,47 @@
-# Setup
+# Development setup
 
-## Upload to GitHub manually
+## Current bootstrap state
 
-1. Download and unzip the archive.
-2. Open repository `dedtsss/etalon-project-template`.
-3. Upload all files and folders from the archive root.
-4. Commit with message:
+Android source has not yet been imported into this repository. During bootstrap the meaningful repository check is:
 
-```text
-v0.1.0: add etalon repository template
+```bash
+./scripts/check.sh
 ```
 
-## Enable template repository
+It validates the etalon structure and explicitly skips Android build/test while `gradlew` is absent.
 
-In GitHub:
+## After HeliBoard baseline import
 
-```text
-Settings -> General -> Template repository
+The implementation PR must preserve a standard Android/Gradle wrapper workflow so a fresh clone can run without local IDE-specific state.
+
+Expected commands after import:
+
+```bash
+./gradlew assembleDebug
+./gradlew test
 ```
 
-After that, new repositories can be created with:
+`scripts/build.sh`, `scripts/test.sh` and PowerShell equivalents should wrap the actual project commands once the source layout is known.
 
-```text
-Use this template
-```
+## Voice-model dependencies
 
-## Visibility
+The first Govorun/GigaAM integration is expected to require:
 
-The template can remain public as long as it contains no secrets, tokens, private customer data or internal project details.
+- GigaAM v3 model files;
+- sherpa-onnx Android runtime;
+- Silero VAD model/runtime pieces.
 
-If private visibility does not break access for Codex/Claude/GitHub tools, it can be made private later.
+Do not commit third-party binaries/models blindly. Before adding each dependency:
+
+1. verify its exact license and redistribution terms;
+2. record source/version/hash or reproducible download procedure;
+3. decide whether it belongs in Git, GitHub Release assets, CI download, or a model-install flow;
+4. never put API credentials into Gradle/resources/repository files.
+
+## Target for first internal prototype
+
+arm64-only is acceptable for the first integrated voice prototype. This does **not** define final public compatibility.
+
+## Secrets
+
+Online-cleanup credentials are not required for local ASR and must not be committed. Follow `docs/standards/secrets-policy.md`.

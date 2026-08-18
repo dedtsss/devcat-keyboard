@@ -1,3 +1,9 @@
 $ErrorActionPreference = "Stop"
-Write-Host "No project-specific tests configured yet."
-Write-Host "Adapt scripts/test.ps1 for the actual project stack."
+
+if (Test-Path ".\gradlew.bat") {
+    Write-Host "== CatBoard Android tests =="
+    & .\gradlew.bat test
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+} else {
+    Write-Host "CatBoard Android source is not imported yet; Gradle tests skipped during repository bootstrap."
+}

@@ -1,17 +1,14 @@
 $ErrorActionPreference = "Stop"
 
-Write-Host "== etalon-repository check =="
+Write-Host "== CatBoard project check =="
 
-if (Test-Path "./scripts/doctor.ps1") {
-    ./scripts/doctor.ps1
-}
+& .\scripts\doctor.ps1
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-if (Test-Path "./scripts/test.ps1") {
-    ./scripts/test.ps1
-}
+& .\scripts\test.ps1
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-if (Test-Path "./scripts/build.ps1") {
-    ./scripts/build.ps1
-}
+& .\scripts\build.ps1
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-Write-Host "Check completed."
+Write-Host "CatBoard check completed."
