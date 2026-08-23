@@ -115,6 +115,9 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
 
     // toolbar views, drawables and setup
     private val toolbar: ViewGroup = findViewById(R.id.toolbar)
+    private var voiceStateView: TextView? = null
+    private var voiceStateText: CharSequence? = null
+    private var voiceStateTextColor: Int = 0
     private val toolbarContainer: View = findViewById(R.id.toolbar_container)
     private val pinnedKeys: ViewGroup = findViewById(R.id.pinned_keys)
     private val suggestionsStrip: ViewGroup = findViewById(R.id.suggestions_strip)
@@ -132,6 +135,7 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
 
     init {
         val colors = Settings.getValues().mColors
+        voiceStateTextColor = colors.get(ColorType.KEY_TEXT)
 
         // expand key
         // weird way of setting size (default is config_suggestions_strip_edge_key_width)
@@ -241,10 +245,40 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         toolbarExpandKey.scaleX = (if (toolbarVisible) -1f else 1f) * direction
     }
 
+    fun setVoiceState(text: CharSequence?) {
+        voiceStateText = text
+        if (text.isNullOrEmpty()) {
+            voiceStateView?.let { suggestionsStrip.removeView(it) }
+            voiceStateView = null
+            setSuggestions(suggestedWords, direction != 1)
+        } else {
+            renderVoiceState()
+        }
+    }
+
+    private fun renderVoiceState() {
+        clear()
+        val view = TextView(context, null, R.attr.suggestionWordStyle).apply {
+            gravity = android.view.Gravity.CENTER
+            setTextColor(voiceStateTextColor)
+            text = voiceStateText
+        }
+        voiceStateView = view
+        suggestionsStrip.addView(view, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT))
+        suggestionsStrip.isVisible = true
+        isExternalSuggestionVisible = true
+    }
+
     fun setSuggestions(suggestions: SuggestedWords, isRtlLanguage: Boolean) {
+        suggestedWords = suggestions
+        if (!voiceStateText.isNullOrEmpty()) {
+            setRtl(isRtlLanguage)
+            renderVoiceState()
+            return
+        }
         clear()
         setRtl(isRtlLanguage)
-        suggestedWords = suggestions
         startIndexOfMoreSuggestions = layoutHelper.layoutAndReturnStartIndexOfMoreSuggestions(
             context, suggestedWords, suggestionsStrip, this
         )

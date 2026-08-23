@@ -88,6 +88,7 @@ import helium314.keyboard.latin.utils.SubtypeLocaleUtils;
 import helium314.keyboard.latin.utils.SubtypeSettings;
 import helium314.keyboard.latin.utils.SubtypeState;
 import helium314.keyboard.latin.utils.ToolbarMode;
+import helium314.keyboard.latin.voice.VoiceController;
 import helium314.keyboard.settings.SettingsActivity2;
 import kotlin.Unit;
 
@@ -101,6 +102,7 @@ import java.util.concurrent.TimeUnit;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.annotation.StringRes;
 import androidx.core.content.ContextCompat;
 
 /**
@@ -108,7 +110,7 @@ import androidx.core.content.ContextCompat;
  */
 public class LatinIME extends InputMethodService implements
         SuggestionStripView.Listener, SuggestionStripViewAccessor,
-        DictionaryFacilitator.DictionaryInitializationListener {
+        DictionaryFacilitator.DictionaryInitializationListener, VoiceController.Host {
     static final String TAG = LatinIME.class.getSimpleName();
     private static final boolean TRACE = false;
 
@@ -187,6 +189,7 @@ public class LatinIME extends InputMethodService implements
     private GestureConsumer mGestureConsumer = GestureConsumer.NULL_GESTURE_CONSUMER;
 
     private final ClipboardHistoryManager mClipboardHistoryManager = new ClipboardHistoryManager(this);
+    private VoiceController mVoiceController;
 
     public static final class UIHandler extends LeakGuardHandlerWrapper<LatinIME> {
         private static final int MSG_UPDATE_SHIFT_STATE = 0;
@@ -547,6 +550,7 @@ public class LatinIME extends InputMethodService implements
         mDisplayContext = KtxKt.getDisplayContext(this);
         KeyboardSwitcher.init(this);
         super.onCreate();
+        mVoiceController = new VoiceController(this);
 
         loadSettings();
         mClipboardHistoryManager.onCreate();
@@ -692,6 +696,7 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onDestroy() {
+        if (mVoiceController != null) mVoiceController.cancel();
         mClipboardHistoryManager.onDestroy();
         mDictionaryFacilitator.closeDictionaries();
         mSettings.onDestroy();
@@ -1014,6 +1019,7 @@ public class LatinIME extends InputMethodService implements
     @Override
     public void onWindowHidden() {
         super.onWindowHidden();
+        if (mVoiceController != null) mVoiceController.cancel();
         Log.i(TAG, "onWindowHidden");
         final MainKeyboardView mainKeyboardView = mKeyboardSwitcher.getMainKeyboardView();
         if (mainKeyboardView != null) {
@@ -1023,6 +1029,7 @@ public class LatinIME extends InputMethodService implements
     }
 
     void onFinishInputInternal() {
+        if (mVoiceController != null) mVoiceController.cancel();
         super.onFinishInput();
         Log.i(TAG, "onFinishInput");
 
@@ -1412,7 +1419,8 @@ public class LatinIME extends InputMethodService implements
     // completely replace #onCodeInput.
     public void onEvent(@NonNull final Event event) {
         if (KeyCode.VOICE_INPUT == event.getKeyCode()) {
-            mRichImm.switchToShortcutIme(this);
+            mVoiceController.toggle();
+            return;
         }
         final InputTransaction completeInputTransaction =
                 mInputLogic.onCodeInput(mSettings.getCurrent(), event,
@@ -1420,6 +1428,38 @@ public class LatinIME extends InputMethodService implements
                         mKeyboardSwitcher.getCurrentKeyboardScript(), mHandler);
         updateStateAfterInputTransaction(completeInputTransaction);
         mKeyboardSwitcher.onEvent(event, getCurrentAutoCapsState(), getCurrentRecapitalizeState());
+    }
+
+    @NonNull
+    @Override
+    public Context getVoiceContext() {
+        return this;
+    }
+
+    @Nullable
+    @Override
+    public android.view.inputmethod.InputConnection getVoiceInputConnection() {
+        return getCurrentInputConnection();
+    }
+
+    @Override
+    public void onVoiceStateChanged(@NonNull final VoiceController.State state) {
+        Log.i(TAG, "Voice state: " + state);
+        if (mSuggestionStripView != null) {
+            final int status = switch (state) {
+                case IDLE -> 0;
+                case PERMISSION_REQUIRED -> R.string.voice_status_permission_required;
+                case READY -> R.string.voice_status_ready;
+                case ERROR -> R.string.voice_status_runtime_unavailable;
+            };
+            mSuggestionStripView.setVoiceState(status == 0 ? null : getString(status));
+        }
+    }
+
+    @Override
+    public void onVoiceMessage(@StringRes final int messageRes) {
+        Log.w(TAG, "Voice: " + getString(messageRes));
+        if (mSuggestionStripView != null) mSuggestionStripView.setVoiceState(getString(messageRes));
     }
 
     public void onTextInput(@Nullable String rawText) {
