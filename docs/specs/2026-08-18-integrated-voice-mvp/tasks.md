@@ -4,7 +4,7 @@ Status: planned
 
 ## A. Baseline
 
-- [ ] Select and record exact HeliBoard upstream revision.
+- [x] Select and record exact HeliBoard upstream revision: `50d13c1bd6c3f4ee6d69644b3d422145cb928503`.
 - [ ] Import baseline with license/attribution intact.
 - [ ] Build untouched baseline.
 - [ ] Adapt `scripts/build.*`, `scripts/test.*`, `scripts/check.*` and CI.

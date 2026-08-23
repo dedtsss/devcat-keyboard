@@ -1,10 +1,10 @@
 # Project Status
 
-Date: 2026-08-18  
+Date: 2026-08-23
 Repository: `dedtsss/devcat-keyboard`  
 Product working name: **CatBoard**  
 Etalon baseline: v0.2.0  
-Stage: `bootstrap / architecture accepted / implementation not started`
+Stage: `Stage B / HeliBoard baseline imported / voice implementation gated on CI`
 
 ## Current state
 
@@ -12,7 +12,7 @@ The repository was created from `dedtsss/etalon-project-template`.
 
 Accepted direction:
 
-- HeliBoard is the keyboard base;
+- HeliBoard is the keyboard base; the selected upstream revision is now imported;
 - Govorun/GigaAM voice recognition is embedded into the keyboard instead of running as a floating Accessibility overlay;
 - the toolbar microphone becomes a native CatBoard action;
 - local Russian ASR remains available fully offline;
@@ -20,7 +20,13 @@ Accepted direction:
 - HeliBoard themes, emoji and clipboard are preserved and improved incrementally;
 - swipe typing is not a priority.
 
-Android product source has **not yet been imported**. Current work is repository bootstrap, durable architecture and the first implementation contract.
+Android product source is imported from HeliBoard revision `50d13c1bd6c3f4ee6d69644b3d422145cb928503`.
+The imported upstream code remains GPL-3.0, with source attribution and license texts retained in
+`LICENSE-HELIBOARD`; CatBoard-specific repository and harness files remain additive around that base.
+
+The internal alpha identity is `devcat.catboard` (debug: `devcat.catboard.debug`) with the
+`CatBoard` application label, allowing side-by-side installation with HeliBoard. The keyboard
+package still has no `android.permission.INTERNET`; online cleanup remains a later companion boundary.
 
 ## Accepted first architecture
 
@@ -73,7 +79,9 @@ The old Accessibility overlay, floating bird and modal recognition-dialog UX are
 
 ## Next step
 
-Create/execute the first product Issue from the integrated voice MVP spec:
+Next gated step is to prove this baseline in GitHub Actions and retain an installable debug APK
+artifact from the checkpoint HEAD. Only after that gate passes may the first product Issue from the
+integrated voice MVP spec be implemented:
 
 1. import a clean current HeliBoard baseline while preserving licensing/history evidence;
 2. make the upstream baseline build cleanly before voice changes;
