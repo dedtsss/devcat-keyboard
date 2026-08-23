@@ -12,4 +12,4 @@ if [[ "${CATBOARD_RUN_ANDROID:-0}" != "1" ]]; then
 fi
 
 echo "== CatBoard Android unit tests (GitHub Actions) =="
-./gradlew --no-daemon test
+./gradlew --no-daemon testRunTestsUnitTest
