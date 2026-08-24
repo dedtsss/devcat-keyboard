@@ -1,6 +1,6 @@
 # Tasks — integrated voice MVP
 
-Status: Stage C implementation checkpoint; CI/device acceptance remains open
+Status: Stage D implementation checkpoint; CI/device acceptance remains open
 
 ## A. Baseline
 

@@ -1,10 +1,10 @@
 # Project Status
 
-Date: 2026-08-23
+Date: 2026-08-24
 Repository: `dedtsss/devcat-keyboard`  
 Product working name: **CatBoard**  
 Etalon baseline: v0.2.0  
-Stage: `Stage C / embedded offline voice runtime checkpoint / CI and device evidence pending`
+Stage: `Stage D / usable voice UX and reliability checkpoint / CI and device evidence pending`
 
 ## Current state
 
@@ -87,15 +87,20 @@ recoverable commit errors have explicit paths. Runtime/model assets are reproduc
 prepared in CI by `scripts/prepare-voice-runtime.sh`; the large ignored artifacts are not
 checked into Git. The keyboard manifest retains `RECORD_AUDIO` and no `INTERNET` permission.
 
+Stage D source work adds compact suggestion-strip recording/transcribing/error feedback,
+cancels voice sessions when the editor or keyboard view changes, ignores rapid re-starts while
+AudioRecord is still releasing, handles recorder-construction failures, and releases the native
+recognizer/coroutine scope when the IME service is destroyed. Tap start/stop remains supported;
+hold-to-talk is deferred because the existing toolbar plumbing has no low-risk press/release seam.
+
 This is a source/static checkpoint only. Actions must still build the prepared APK, and a
 physical Android test must provide the required airplane-mode dictation, focus/lifecycle,
-mic start/stop and transcript evidence before Stage C is accepted.
+mic start/stop and transcript evidence before Stage D is accepted.
 
 ## Next step
 
-Next gated step is to prove this runtime in GitHub Actions from a fresh checkout, including
-CI asset preparation and an installable APK artifact. Stage C then needs physical-device
-evidence for airplane-mode dictation, mic start/stop, focus changes and error recovery before
-the controller opens the next stage.
+Next gated step is to prove this Stage D checkpoint in GitHub Actions from a fresh checkout.
+Physical-device evidence for airplane-mode dictation, mic start/stop, focus changes and error
+recovery remains deferred until all engineering/CI stages are complete by mission contract.
 
 No public release or merge to `main` is authorized by this status document alone.

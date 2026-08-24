@@ -69,10 +69,15 @@ class VadRecorder(private val context: Context) {
         val bufferSize = AudioRecord.getMinBufferSize(
             RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
         ).coerceAtLeast(bytes * 8)
-        val candidate = AudioRecord(
-            MediaRecorder.AudioSource.MIC, RATE, AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT, bufferSize
-        )
+        val candidate = try {
+            AudioRecord(
+                MediaRecorder.AudioSource.MIC, RATE, AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT, bufferSize
+            )
+        } catch (failure: RuntimeException) {
+            Log.e(TAG, "Audio recorder initialization failed", failure)
+            return false
+        }
         if (candidate.state != AudioRecord.STATE_INITIALIZED) {
             candidate.release()
             return false

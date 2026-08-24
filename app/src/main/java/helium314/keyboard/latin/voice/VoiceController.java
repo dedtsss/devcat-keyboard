@@ -33,20 +33,29 @@ public final class VoiceController {
     private final Host host;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private State state = State.IDLE;
+    private volatile boolean routeActive;
     private String recoverableTranscript;
     private final VoiceRuntime runtime;
 
     public VoiceController(@NonNull final Host host) {
         this.host = host;
         runtime = new VoiceRuntime(host.getVoiceContext(), new VoiceRuntime.Listener() {
-            @Override public void onRecordingStarted() { setState(State.RECORDING); }
-            @Override public void onTranscribing() { setState(State.TRANSCRIBING); }
-            @Override public void onTranscript(final String text) { commitTranscript(text); }
+            @Override public void onRecordingStarted() {
+                if (routeActive) setState(State.RECORDING);
+            }
+            @Override public void onTranscribing() {
+                if (routeActive) setState(State.TRANSCRIBING);
+            }
+            @Override public void onTranscript(final String text) {
+                if (routeActive) commitTranscript(text);
+            }
             @Override public void onNoSpeech() {
+                if (!routeActive) return;
                 setState(State.READY);
                 host.onVoiceMessage(R.string.voice_status_no_speech);
             }
             @Override public void onFailure() {
+                if (!routeActive) return;
                 setState(State.ERROR);
                 host.onVoiceMessage(R.string.voice_error_runtime_failed);
             }
@@ -62,6 +71,7 @@ public final class VoiceController {
     }
 
     private void startVoiceRoute() {
+        routeActive = true;
         final Context context = host.getVoiceContext();
         if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -73,6 +83,7 @@ public final class VoiceController {
                         @Override protected void onReceiveResult(final int resultCode, final android.os.Bundle data) {
                             if (resultCode == 1) startVoiceRoute();
                             else {
+                                routeActive = false;
                                 setState(State.PERMISSION_REQUIRED);
                                 host.onVoiceMessage(R.string.voice_status_permission_required);
                             }
@@ -86,6 +97,9 @@ public final class VoiceController {
     }
 
     private void startRecording() {
+        // Cancellation releases AudioRecord asynchronously. Ignore a rapid re-tap until
+        // that release has completed instead of starting a second capture session.
+        if (runtime.isRecording()) return;
         if (!runtime.start()) setState(State.ERROR);
     }
 
@@ -106,6 +120,7 @@ public final class VoiceController {
                 return false;
             }
             recoverableTranscript = null;
+            routeActive = false;
             setState(State.IDLE);
             return true;
         } catch (RuntimeException failure) {
@@ -118,7 +133,15 @@ public final class VoiceController {
     @Nullable public String getRecoverableTranscript() { return recoverableTranscript; }
 
     public void cancel() {
+        routeActive = false;
         runtime.cancel();
+        if (state != State.IDLE) setState(State.IDLE);
+    }
+
+    /** Called only when the IME service is being destroyed. */
+    public void destroy() {
+        routeActive = false;
+        runtime.destroy();
         if (state != State.IDLE) setState(State.IDLE);
     }
 
