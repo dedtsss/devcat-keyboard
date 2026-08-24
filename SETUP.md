@@ -2,13 +2,21 @@
 
 ## Current alpha install/test notes
 
-The exact Stage E/alpha debug artifact is built from commit
+The historical Stage E keyboard-only debug artifact was built from commit
 `b0f4afc40daad4291734331f9d5645a4602e719b`:
 
-- GitHub Actions artifact `catboard-debug-b0f4afc40daad4291734331f9d5645a4602e719b`, id `9526531713`;
+- GitHub Actions artifact `catboard-debug-b0f4afc40daad4291734331f9d5645a4602e719b`, id `9526531713`
+  (keyboard APK only; not the full two-APK Stage F alpha);
 - APK size `310,357,002` bytes, SHA-256
   `143a5a462af90765b7a9cdac67bc59c271722efd51642144281ad76c28760ed5`;
 - push run `32743738093` and PR run `32743743021` passed; artifact expires 2026-11-22.
+
+The Stage F controller push and exact-head Actions run for the two-APK artifact are pending; no
+final Stage F CI or artifact result is claimed here. The workflow will publish one artifact named
+`catboard-alpha-debug-${GITHUB_SHA}` containing:
+
+- `app/build/outputs/apk/debug/CatBoard_*-debug.apk`;
+- `cleaner-companion/build/outputs/apk/debug/cleaner-companion-debug.apk`.
 
 Full alpha behavior uses two APKs. Install the companion first, then CatBoard, using APKs
 from the same exact CI head and the same signing identity. Enable CatBoard in Android keyboard

@@ -30,9 +30,11 @@ jobs:
           CATBOARD_RUN_ANDROID: '1'
         run: ./scripts/check.sh
 
-      - name: Upload debug APK
+      - name: Upload Stage F debug APKs
         uses: actions/upload-artifact@v4
         with:
-          name: catboard-debug-${{ github.sha }}
-          path: app/build/outputs/apk/debug/CatBoard_*-debug.apk
+          name: catboard-alpha-debug-${{ github.sha }}
+          path: |
+            app/build/outputs/apk/debug/CatBoard_*-debug.apk
+            cleaner-companion/build/outputs/apk/debug/cleaner-companion-debug.apk
           if-no-files-found: error

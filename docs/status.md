@@ -103,11 +103,12 @@ permission, package-allowlist, missing-key, provider and IPC failure returns the
 local transcript for commit. The companion stores its provider Authorization Key separately
 under the existing Govorun preference name `gigachat_authorization_key`; no key is checked in.
 
-Exact-head Stage E CI is green at `b0f4afc40daad4291734331f9d5645a4602e719b`: push run
+Historical exact-head Stage E CI was green at `b0f4afc40daad4291734331f9d5645a4602e719b`: push run
 `32743738093`, PR run `32743743021`, artifact `9526531713` (`310,357,002` bytes,
-SHA-256 `143a5a462af90765b7a9cdac67bc59c271722efd51642144281ad76c28760ed5`). The artifact
-contains the keyboard debug APK; the full optional-cleanup alpha requires the separately built
-`cleaner-companion` APK from the same head, installed companion-first, then keyboard.
+SHA-256 `143a5a462af90765b7a9cdac67bc59c271722efd51642144281ad76c28760ed5`). This historical
+artifact contains only the keyboard debug APK; it is not the full two-APK Stage F alpha. The
+full optional-cleanup alpha requires the `cleaner-companion` APK from the same head, installed
+companion-first, then keyboard.
 
 Stage F static checks record the package boundary: `app` has `RECORD_AUDIO` and no INTERNET;
 `cleaner-companion` alone has INTERNET and owns the signature-level cleanup permission/service.
@@ -115,6 +116,10 @@ Both application modules are explicit targets of the CI build. The keyboard is m
 packages armeabi-v7a, arm64-v8a, x86 and x86_64; the bundled GigaAM v3/sherpa/VAD runtime is
 large and the debug APK is about 310 MB. Model assets are downloaded and hash-verified in CI,
 not committed. Runtime, memory, latency and public distribution limits remain unmeasured.
+
+The Stage F controller push and exact-head Actions run/artifact publication are pending. The
+workflow is configured to publish both installable debug APKs together, but this checkout does
+not claim final exact-head CI or artifact evidence until that controller run completes.
 
 No approved `gigachat_authorization_key` is available for live provider smoke. Physical-device
 installation, airplane-mode dictation, mic/focus lifecycle and installed cross-package IPC are
