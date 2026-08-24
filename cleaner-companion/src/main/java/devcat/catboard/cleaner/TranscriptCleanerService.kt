@@ -54,6 +54,9 @@ class TranscriptCleanerService : Service() {
     }
 }
 
+internal const val CLEANER_PREFS = "gigachat_cleaner"
+internal const val AUTHORIZATION_KEY = "gigachat_authorization_key"
+
 internal object CleanerProtocol {
     const val DESCRIPTOR = "devcat.catboard.cleaner.ITranscriptCleaner"
     const val PERMISSION = "devcat.catboard.permission.CLEAN_TRANSCRIPT"
@@ -75,8 +78,8 @@ private class GigaChatClient(private val service: Service) {
     }
 
     fun cleanupText(input: String, mode: String): String {
-        val key = service.getSharedPreferences("gigachat_cleaner", 0)
-            .getString("gigachat_authorization_key", "").orEmpty().trim()
+        val key = service.getSharedPreferences(CLEANER_PREFS, 0)
+            .getString(AUTHORIZATION_KEY, "").orEmpty().trim()
         check(key.isNotEmpty()) { "missing_authorization_key" }
         require(input.length <= MAX_INPUT_CHARS) { "input_too_long" }
         val response = postJson(
@@ -124,8 +127,8 @@ private class GigaChatClient(private val service: Service) {
     private fun post(url: String, headers: Map<String, String>, body: String): JSONObject {
         val connection = (URL(url).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
-            connectTimeout = 15_000
-            readTimeout = 30_000
+            connectTimeout = 2_000
+            readTimeout = 5_000
             doOutput = true
             setRequestProperty("Accept", "application/json")
             headers.forEach { (name, value) -> setRequestProperty(name, value) }

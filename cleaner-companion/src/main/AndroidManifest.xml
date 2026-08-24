@@ -7,6 +7,12 @@
         android:protectionLevel="signature" />
 
     <application android:label="CatBoard Cleaner" android:allowBackup="false">
+        <activity android:name=".CleanerSettingsActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <service
             android:name=".TranscriptCleanerService"
             android:exported="true"

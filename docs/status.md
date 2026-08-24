@@ -95,6 +95,12 @@ hold-to-talk is deferred because the existing toolbar plumbing has no low-risk p
 
 ## Current Stage E checkpoint
 
+Audit correction checkpoint: cleanup is now user-operated from CatBoard settings (off by
+default, Light/Normal/Clean), while the companion launcher owns Save/Clear for its private
+provider key. Local transcript fallback has a 2.5 second keyboard deadline; companion HTTP
+connect/read limits are 2/5 seconds and late results are rejected after fallback or route
+change. This is source/static evidence only until exact-head CI and physical testing.
+
 An optional `cleaner-companion` Android package owns `INTERNET` and exposes only an
 explicitly targeted, signature-protected transcript-cleaning Binder service. The keyboard
 client sends one local transcript and a cleanup mode only, with a 1-second bind bound and
