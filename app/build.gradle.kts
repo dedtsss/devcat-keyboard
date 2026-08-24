@@ -132,7 +132,12 @@ dependencies {
     implementation("androidx.viewpager2:viewpager2:1.1.0")
 
     // kotlin
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+
+    // Offline voice runtime. scripts/prepare-voice-runtime.sh fetches the pinned AAR
+    // and model assets in CI; these files are intentionally not tracked in Git.
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("sherpa-onnx.aar"))))
 
     // compose
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")

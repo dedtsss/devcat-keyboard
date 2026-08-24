@@ -8,12 +8,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2"
     tools:ignore="MissingTranslation">
+    <string name="voice_status_permission_required">Microphone permission required</string>
+    <string name="voice_status_ready">Voice input ready</string>
+    <string name="voice_status_runtime_unavailable">Offline voice runtime is not installed yet</string>
+    <string name="voice_status_recording">Listening offline</string>
+    <string name="voice_status_transcribing">Transcribing offline</string>
+    <string name="voice_status_no_speech">No speech detected</string>
+    <string name="voice_error_runtime_failed">Offline voice runtime failed; try again</string>
+    <string name="voice_error_editor_unavailable">Editor is no longer available; transcript retained</string>
+    <string name="voice_error_transcript_rejected">Transcript was rejected; transcript retained</string>
+    <string name="voice_error_transcript_commit_failed">Could not commit transcript; transcript retained</string>
     <!-- Name of Android spell checker service. The app name should not be translated. -->
-    <string name="spell_checker_service_name">HeliBoard Spell Checker</string>
+    <string name="spell_checker_service_name">CatBoard Spell Checker</string>
     <!-- Title for IME settings screen. The app name should not be translated. -->
-    <string name="ime_settings">HeliBoard Settings</string>
+    <string name="ime_settings">CatBoard Settings</string>
     <!-- Title for the spell checking service settings screen. The app name should not be translated. -->
-    <string name="android_spell_checker_settings">HeliBoard Spell Checker Settings</string>
+    <string name="android_spell_checker_settings">CatBoard Spell Checker Settings</string>
     <!-- Option to provide vibrate/haptic feedback on keypress -->
     <string name="vibrate_on_keypress">Vibrate on keypress</string>
     <!-- Option to provide vibrate/haptic feedback on keypress even in do not disturb mode -->
