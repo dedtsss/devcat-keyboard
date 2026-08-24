@@ -53,6 +53,24 @@ class VoiceRuntime(private val context: Context, private val listener: Listener)
         }
     }
 
+    /** Transcribes an already captured, bounded PCM utterance without starting another recorder. */
+    fun transcribe(pcm: ByteArray) {
+        listener.onTranscribing()
+        scope.launch {
+            try {
+                val transcript = withContext(Dispatchers.Default) {
+                    LocalTextPostProcessor.apply(OfflineTranscriber.get(context).transcribe(pcm))
+                }
+                withContext(Dispatchers.Main.immediate) {
+                    if (transcript.isBlank()) listener.onNoSpeech()
+                    else listener.onTranscript(transcript)
+                }
+            } catch (_: Exception) {
+                withContext(Dispatchers.Main.immediate) { listener.onFailure() }
+            }
+        }
+    }
+
     fun cancel() {
         recorder.cancel()
     }

@@ -1438,6 +1438,11 @@ public class LatinIME extends InputMethodService implements
     }
 
     @Override
+    public android.content.Context getVoiceContext() {
+        return this;
+    }
+
+    @Override
     public boolean hasMicrophonePermission() {
         return ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
                 == android.content.pm.PackageManager.PERMISSION_GRANTED;
