@@ -47,7 +47,20 @@ public final class VoiceController {
                 if (routeActive) setState(State.TRANSCRIBING);
             }
             @Override public void onTranscript(final String text) {
-                if (routeActive) commitTranscript(text);
+                if (!routeActive) return;
+                // Retain the local result before any optional IPC/network work.
+                recoverableTranscript = text;
+                if (!OnlineCleanupPreferences.isEnabled(host.getVoiceContext())) {
+                    commitTranscript(text);
+                    return;
+                }
+                new Thread(() -> {
+                    final String cleaned = OnlineCleanupClient.clean(
+                            host.getVoiceContext(), text, OnlineCleanupPreferences.MODE_NORMAL);
+                    mainHandler.post(() -> {
+                        if (routeActive) commitTranscript(cleaned == null ? text : cleaned);
+                    });
+                }, "catboard-online-cleanup").start();
             }
             @Override public void onNoSpeech() {
                 if (!routeActive) return;

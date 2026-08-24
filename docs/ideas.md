@@ -42,6 +42,9 @@ Status: candidate
 Ограничение:
 Не превращать MVP в универсальный AI-gateway. Сначала один рабочий provider.
 
+Stage E now has the first concrete seam: the network provider is isolated in
+`cleaner-companion`; provider settings UI and a second provider remain future work.
+
 ## 2026-08-18 — Optional cloud ASR
 Status: candidate
 

@@ -4,7 +4,7 @@ Date: 2026-08-24
 Repository: `dedtsss/devcat-keyboard`  
 Product working name: **CatBoard**  
 Etalon baseline: v0.2.0  
-Stage: `Stage D / usable voice UX and reliability checkpoint / CI and device evidence pending`
+Stage: `Stage E / optional online cleanup boundary checkpoint / CI and device evidence pending`
 
 ## Current state
 
@@ -93,13 +93,29 @@ AudioRecord is still releasing, handles recorder-construction failures, and rele
 recognizer/coroutine scope when the IME service is destroyed. Tap start/stop remains supported;
 hold-to-talk is deferred because the existing toolbar plumbing has no low-risk press/release seam.
 
-This is a source/static checkpoint only. Actions must still build the prepared APK, and a
-physical Android test must provide the required airplane-mode dictation, focus/lifecycle,
-mic start/stop and transcript evidence before Stage D is accepted.
+## Current Stage E checkpoint
+
+An optional `cleaner-companion` Android package owns `INTERNET` and exposes only an
+explicitly targeted, signature-protected transcript-cleaning Binder service. The keyboard
+client sends one local transcript and a cleanup mode only, with a 1-second bind bound and
+provider timeouts bounded inside the companion. The opt-in gate defaults off; every bind,
+permission, package-allowlist, missing-key, provider and IPC failure returns the original
+local transcript for commit. The companion stores its provider Authorization Key separately
+under the existing Govorun preference name `gigachat_authorization_key`; no key is checked in.
+
+This remains a source/static checkpoint. The companion's exact-head CI build, installed
+cross-package smoke and provider smoke are still required; no live provider credential is
+currently available through the approved Bruce secret helper. Physical-device airplane-mode
+and lifecycle evidence remains deferred until engineering/CI work is complete.
+
+This is a source/static checkpoint only. Actions must still build both application modules,
+and a physical Android test must provide the required airplane-mode dictation, focus/lifecycle,
+mic start/stop and transcript evidence before the voice stages are accepted.
 
 ## Next step
 
-Next gated step is to prove this Stage D checkpoint in GitHub Actions from a fresh checkout.
+Next gated step is to prove this Stage E checkpoint in GitHub Actions from a fresh checkout,
+including companion installation/IPC smoke where the workflow can support it.
 Physical-device evidence for airplane-mode dictation, mic start/stop, focus changes and error
 recovery remains deferred until all engineering/CI stages are complete by mission contract.
 
