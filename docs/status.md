@@ -1,37 +1,18 @@
 # Project Status
 
-Date: 2026-09-04
+Date: 2026-08-24
 Repository: `dedtsss/devcat-keyboard`  
 Product working name: **CatBoard**  
 Etalon baseline: v0.2.0  
-Stage: `Stage 2A internal voice route implemented / recording and ASR not started`
+Stage: `Stage D / usable voice UX and reliability checkpoint / CI and device evidence pending`
 
 ## Current state
 
-The repository now contains a clean HeliBoard 4.1 source baseline imported from
-`HeliBorg/HeliBoard` tag `v4.1`, commit
-`9f5bb635c2e8609dcd95dc7506c0c58fba82a52c`. The exact import and license boundary
-is recorded in [`docs/upstream/heliboard.md`](upstream/heliboard.md).
-
-CatBoard now intercepts the existing toolbar microphone action in `LatinIME` and
-routes it to an internal `VoiceController` instead of switching to an external
-shortcut IME. The controller owns bounded idle, permission-request,
-placeholder-ready, and error states. A non-exported activity requests
-`RECORD_AUDIO`, and denial or cancellation returns the controller to idle.
-
-Stage 2A does not add recording, recognition, GigaAM, sherpa-onnx, Silero VAD,
-model assets, or network access. A narrow future transcript-delivery method commits
-through the current `InputConnection` and retains text when that commit fails.
-
-`./scripts/check.sh` is the lightweight host-safe structure/provenance preflight.
-GitHub Actions job `check` is the authoritative Android build environment: it sets
-up JDK 21 (required by Robolectric when testing against target SDK 36) and the pinned
-Android SDK/NDK, runs `:app:testRunTestsUnitTest`, and builds `:app:assembleDebug`.
-No emulator is required for this stage.
+The repository was created from `dedtsss/etalon-project-template`.
 
 Accepted direction:
 
-- HeliBoard is the keyboard base;
+- HeliBoard is the keyboard base; the selected upstream revision is now imported;
 - Govorun/GigaAM voice recognition is embedded into the keyboard instead of running as a floating Accessibility overlay;
 - the toolbar microphone becomes a native CatBoard action;
 - local Russian ASR remains available fully offline;
@@ -39,8 +20,13 @@ Accepted direction:
 - HeliBoard themes, emoji and clipboard are preserved and improved incrementally;
 - swipe typing is not a priority.
 
-Only the controller/permission/editor boundary of the accepted voice architecture
-is implemented. The audio and recognition portions remain future scope.
+Android product source is imported from HeliBoard revision `50d13c1bd6c3f4ee6d69644b3d422145cb928503`.
+The imported upstream code remains GPL-3.0, with source attribution and license texts retained in
+`LICENSE-HELIBOARD`; CatBoard-specific repository and harness files remain additive around that base.
+
+The internal alpha identity is `devcat.catboard` (debug: `devcat.catboard.debug`) with the
+`CatBoard` application label, allowing side-by-side installation with HeliBoard. The keyboard
+package still has no `android.permission.INTERNET`; online cleanup remains a later companion boundary.
 
 ## Accepted first architecture
 
@@ -91,10 +77,30 @@ The old Accessibility overlay, floating bird and modal recognition-dialog UX are
 5. Online cleanup must have a bounded timeout and a safe local-transcript fallback.
 6. Upstream HeliBoard updates should remain reasonably mergeable; avoid unnecessary invasive rewrites.
 
+## Current Stage C checkpoint
+
+The internal microphone route now owns the tap lifecycle: `AudioRecord` captures 16 kHz
+mono PCM, Silero VAD detects speech, sherpa-onnx runs the pinned GigaAM v3 RNNT model,
+local whitespace cleanup runs before the transcript is committed through the active
+`InputConnection`. Permission, no-speech, editor loss, runtime failure, cancellation and
+recoverable commit errors have explicit paths. Runtime/model assets are reproducibly
+prepared in CI by `scripts/prepare-voice-runtime.sh`; the large ignored artifacts are not
+checked into Git. The keyboard manifest retains `RECORD_AUDIO` and no `INTERNET` permission.
+
+Stage D source work adds compact suggestion-strip recording/transcribing/error feedback,
+cancels voice sessions when the editor or keyboard view changes, ignores rapid re-starts while
+AudioRecord is still releasing, handles recorder-construction failures, and releases the native
+recognizer/coroutine scope when the IME service is destroyed. Tap start/stop remains supported;
+hold-to-talk is deferred because the existing toolbar plumbing has no low-risk press/release seam.
+
+This is a source/static checkpoint only. Actions must still build the prepared APK, and a
+physical Android test must provide the required airplane-mode dictation, focus/lifecycle,
+mic start/stop and transcript evidence before Stage D is accepted.
+
 ## Next step
 
-After the Stage 2A PR passes its authoritative GitHub Actions check and is merged,
-plan the next separately authorized stage. Audio capture, ASR integration, models,
-airplane-mode dictation, and device validation are not part of Stage 2A.
+Next gated step is to prove this Stage D checkpoint in GitHub Actions from a fresh checkout.
+Physical-device evidence for airplane-mode dictation, mic start/stop, focus changes and error
+recovery remains deferred until all engineering/CI stages are complete by mission contract.
 
 No public release or merge to `main` is authorized by this status document alone.

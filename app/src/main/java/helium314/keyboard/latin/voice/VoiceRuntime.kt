@@ -5,6 +5,7 @@ import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -20,6 +21,9 @@ class VoiceRuntime(private val context: Context, private val listener: Listener)
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val recorder = VadRecorder(context)
+
+    val isRecording: Boolean
+        get() = recorder.active
 
     fun start(): Boolean {
         val started = recorder.start(scope) { pcm, speechDetected ->
@@ -73,5 +77,12 @@ class VoiceRuntime(private val context: Context, private val listener: Listener)
 
     fun cancel() {
         recorder.cancel()
+    }
+
+    /** Release process-local native resources when the IME service is destroyed. */
+    fun destroy() {
+        recorder.cancel()
+        OfflineTranscriber.release()
+        scope.cancel()
     }
 }
