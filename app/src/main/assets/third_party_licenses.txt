@@ -15,4 +15,4 @@ Silero VAD model
 License: MIT (upstream model provenance)
 Source: https://github.com/snakers4/silero-vad
 Pinned asset source: https://raw.githubusercontent.com/dedtsss/govorun-online-cleaner/663af0b6283fe642c68c260749d5d15c654ec4c1/app/src/main/assets/silero_vad.onnx
-SHA-256: 9e2449e1087498d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6
+SHA-256: 9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6

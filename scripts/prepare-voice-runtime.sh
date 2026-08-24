@@ -26,7 +26,7 @@ download_verified() {
 download_verified "$SHERPA_URL" "$ROOT/app/libs/sherpa-onnx.aar" "$SHERPA_SHA256"
 
 VAD_URL="https://raw.githubusercontent.com/dedtsss/govorun-online-cleaner/663af0b6283fe642c68c260749d5d15c654ec4c1/app/src/main/assets/silero_vad.onnx"
-VAD_SHA256="9e2449e1087498d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6"
+VAD_SHA256="9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6"
 download_verified "$VAD_URL" "$ROOT/app/src/main/assets/silero_vad.onnx" "$VAD_SHA256"
 
 MODEL_TAG="model-gigaam-v3"
