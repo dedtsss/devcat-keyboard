@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.ResultReceiver;
 import android.view.inputmethod.InputConnection;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,6 +37,8 @@ public final class VoiceController {
     private volatile boolean routeActive;
     private String recoverableTranscript;
     private final VoiceRuntime runtime;
+    private long routeGeneration;
+    private static final long CLEANUP_DEADLINE_MS = 2_500L;
 
     public VoiceController(@NonNull final Host host) {
         this.host = host;
@@ -54,11 +57,18 @@ public final class VoiceController {
                     commitTranscript(text);
                     return;
                 }
+                final long generation = routeGeneration;
+                final AtomicBoolean committed = new AtomicBoolean(false);
+                mainHandler.postDelayed(() -> {
+                    if (routeActive && generation == routeGeneration && committed.compareAndSet(false, true))
+                        commitTranscript(text);
+                }, CLEANUP_DEADLINE_MS);
                 new Thread(() -> {
                     final String cleaned = OnlineCleanupClient.clean(
-                            host.getVoiceContext(), text, OnlineCleanupPreferences.MODE_NORMAL);
+                            host.getVoiceContext(), text, OnlineCleanupPreferences.getMode(host.getVoiceContext()));
                     mainHandler.post(() -> {
-                        if (routeActive) commitTranscript(cleaned == null ? text : cleaned);
+                        if (routeActive && generation == routeGeneration && committed.compareAndSet(false, true))
+                            commitTranscript(cleaned == null ? text : cleaned);
                     });
                 }, "catboard-online-cleanup").start();
             }
@@ -84,6 +94,7 @@ public final class VoiceController {
     }
 
     private void startVoiceRoute() {
+        routeGeneration++;
         routeActive = true;
         final Context context = host.getVoiceContext();
         if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)
@@ -146,6 +157,7 @@ public final class VoiceController {
     @Nullable public String getRecoverableTranscript() { return recoverableTranscript; }
 
     public void cancel() {
+        routeGeneration++;
         routeActive = false;
         runtime.cancel();
         if (state != State.IDLE) setState(State.IDLE);
@@ -153,6 +165,7 @@ public final class VoiceController {
 
     /** Called only when the IME service is being destroyed. */
     public void destroy() {
+        routeGeneration++;
         routeActive = false;
         runtime.destroy();
         if (state != State.IDLE) setState(State.IDLE);

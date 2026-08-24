@@ -21,6 +21,15 @@ grep -Fq 'devcat.catboard.permission.CLEAN_TRANSCRIPT' "$app_manifest"
 grep -Fq 'android:protectionLevel="signature"' "$companion_manifest"
 grep -Fq 'android:permission="devcat.catboard.permission.CLEAN_TRANSCRIPT"' "$companion_manifest"
 grep -Fq 'android:exported="true"' "$companion_manifest"
+grep -Fq 'CLEANER_PREFS = "gigachat_cleaner"' cleaner-companion/src/main/java/devcat/catboard/cleaner/TranscriptCleanerService.kt
+grep -Fq 'AUTHORIZATION_KEY = "gigachat_authorization_key"' cleaner-companion/src/main/java/devcat/catboard/cleaner/TranscriptCleanerService.kt
+grep -Fq 'getSharedPreferences(CLEANER_PREFS' cleaner-companion/src/main/java/devcat/catboard/cleaner/TranscriptCleanerService.kt
+grep -Fq 'getSharedPreferences(CLEANER_PREFS' cleaner-companion/src/main/java/devcat/catboard/cleaner/CleanerSettingsActivity.kt
+grep -Fq 'OnlineCleanupPreferences.getMode' app/src/main/java/helium314/keyboard/latin/voice/VoiceController.java
+grep -Fq 'CLEANUP_DEADLINE_MS = 2_500L' app/src/main/java/helium314/keyboard/latin/voice/VoiceController.java
+grep -Fq 'connectTimeout = 2_000' cleaner-companion/src/main/java/devcat/catboard/cleaner/TranscriptCleanerService.kt
+grep -Fq 'readTimeout = 5_000' cleaner-companion/src/main/java/devcat/catboard/cleaner/TranscriptCleanerService.kt
+grep -Fq 'it == VOICE' app/src/main/java/helium314/keyboard/latin/utils/ToolbarUtils.kt
 
 if grep -Fq 'android.permission.INTERNET' "$app_manifest"; then
   echo "Keyboard manifest must not request INTERNET" >&2

@@ -2,6 +2,12 @@
 
 Этот файл хранит только принятые решения CatBoard. Общие процессные правила живут в `docs/standards/` и `AGENTS.md`.
 
+## 2026-08-25 — User-operated bounded online cleanup
+
+Decision: optional cleanup is enabled only from CatBoard settings and remains off by default;
+the companion alone stores the provider key. The keyboard commits the local transcript after
+a 2.5 s overall deadline, with bounded provider HTTP and stale-result guards.
+
 Если решение меняется, старую запись не удалять: отметить как `superseded`, добавить новое решение, причину и evidence.
 
 ## 2026-08-18 — Working product name: CatBoard

@@ -6,19 +6,31 @@ package helium314.keyboard.latin.voice;
 import android.content.Context;
 
 /** Explicit local opt-in gate; disabled by default and independent of editor data. */
-final class OnlineCleanupPreferences {
-    static final String MODE_NORMAL = "normal";
-    private static final String PREFS = "catboard_online_cleanup";
-    private static final String ENABLED = "enabled";
+public final class OnlineCleanupPreferences {
+    public static final String MODE_LIGHT = "light";
+    public static final String MODE_NORMAL = "normal";
+    public static final String MODE_CLEAN = "clean";
+    public static final String PREFS = "catboard_online_cleanup";
+    public static final String ENABLED = "enabled";
+    public static final String MODE = "mode";
 
     private OnlineCleanupPreferences() {}
 
-    static boolean isEnabled(Context context) {
+    public static boolean isEnabled(Context context) {
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(ENABLED, false);
     }
 
-    static void setEnabled(Context context, boolean enabled) {
+    public static void setEnabled(Context context, boolean enabled) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .putBoolean(ENABLED, enabled).apply();
+    }
+
+    public static String getMode(Context context) {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(MODE, MODE_NORMAL);
+    }
+
+    public static void setMode(Context context, String mode) {
+        if (MODE_LIGHT.equals(mode) || MODE_NORMAL.equals(mode) || MODE_CLEAN.equals(mode))
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(MODE, mode).apply();
     }
 }
