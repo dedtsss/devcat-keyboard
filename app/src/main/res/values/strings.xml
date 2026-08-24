@@ -11,6 +11,10 @@
     <string name="voice_status_permission_required">Microphone permission required</string>
     <string name="voice_status_ready">Voice input ready</string>
     <string name="voice_status_runtime_unavailable">Offline voice runtime is not installed yet</string>
+    <string name="voice_status_recording">Listening offline</string>
+    <string name="voice_status_transcribing">Transcribing offline</string>
+    <string name="voice_status_no_speech">No speech detected</string>
+    <string name="voice_error_runtime_failed">Offline voice runtime failed; try again</string>
     <string name="voice_error_editor_unavailable">Editor is no longer available; transcript retained</string>
     <string name="voice_error_transcript_rejected">Transcript was rejected; transcript retained</string>
     <string name="voice_error_transcript_commit_failed">Could not commit transcript; transcript retained</string>

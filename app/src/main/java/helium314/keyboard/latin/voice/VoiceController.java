@@ -19,9 +19,9 @@ import androidx.annotation.StringRes;
 
 import helium314.keyboard.latin.R;
 
-/** Owns the internal voice action lifecycle; ASR is deliberately a later checkpoint. */
+/** Owns the internal voice action lifecycle and the embedded offline runtime. */
 public final class VoiceController {
-    public enum State { IDLE, PERMISSION_REQUIRED, READY, ERROR }
+    public enum State { IDLE, PERMISSION_REQUIRED, READY, RECORDING, TRANSCRIBING, ERROR }
 
     public interface Host {
         @NonNull Context getVoiceContext();
@@ -34,15 +34,30 @@ public final class VoiceController {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private State state = State.IDLE;
     private String recoverableTranscript;
+    private final VoiceRuntime runtime;
 
     public VoiceController(@NonNull final Host host) {
         this.host = host;
+        runtime = new VoiceRuntime(host.getVoiceContext(), new VoiceRuntime.Listener() {
+            @Override public void onRecordingStarted() { setState(State.RECORDING); }
+            @Override public void onTranscribing() { setState(State.TRANSCRIBING); }
+            @Override public void onTranscript(final String text) { commitTranscript(text); }
+            @Override public void onNoSpeech() {
+                setState(State.READY);
+                host.onVoiceMessage(R.string.voice_status_no_speech);
+            }
+            @Override public void onFailure() {
+                setState(State.ERROR);
+                host.onVoiceMessage(R.string.voice_error_runtime_failed);
+            }
+        });
     }
 
     public void toggle() {
         if (state == State.IDLE || state == State.PERMISSION_REQUIRED || state == State.ERROR) startVoiceRoute();
-        else if (state == State.READY) {
-            host.onVoiceMessage(R.string.voice_status_runtime_unavailable);
+        else if (state == State.READY) startRecording();
+        else if (state == State.RECORDING) {
+            runtime.stop();
         }
     }
 
@@ -66,10 +81,12 @@ public final class VoiceController {
             context.startActivity(intent);
             return;
         }
-        // AudioRecord and offline ASR are intentionally a later checkpoint. Do not claim
-        // RECORDING or TRANSCRIBING until those implementations actually own the lifecycle.
         setState(State.READY);
-        host.onVoiceMessage(R.string.voice_status_runtime_unavailable);
+        startRecording();
+    }
+
+    private void startRecording() {
+        if (!runtime.start()) setState(State.ERROR);
     }
 
     /** Commit a local transcript when a later recognizer supplies one. */
@@ -101,6 +118,7 @@ public final class VoiceController {
     @Nullable public String getRecoverableTranscript() { return recoverableTranscript; }
 
     public void cancel() {
+        runtime.cancel();
         if (state != State.IDLE) setState(State.IDLE);
     }
 

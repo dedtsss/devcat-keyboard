@@ -4,7 +4,7 @@ Date: 2026-08-23
 Repository: `dedtsss/devcat-keyboard`  
 Product working name: **CatBoard**  
 Etalon baseline: v0.2.0  
-Stage: `Stage B / HeliBoard baseline imported / voice implementation gated on CI`
+Stage: `Stage C / embedded offline voice runtime checkpoint / CI and device evidence pending`
 
 ## Current state
 
@@ -77,16 +77,25 @@ The old Accessibility overlay, floating bird and modal recognition-dialog UX are
 5. Online cleanup must have a bounded timeout and a safe local-transcript fallback.
 6. Upstream HeliBoard updates should remain reasonably mergeable; avoid unnecessary invasive rewrites.
 
+## Current Stage C checkpoint
+
+The internal microphone route now owns the tap lifecycle: `AudioRecord` captures 16 kHz
+mono PCM, Silero VAD detects speech, sherpa-onnx runs the pinned GigaAM v3 RNNT model,
+local whitespace cleanup runs before the transcript is committed through the active
+`InputConnection`. Permission, no-speech, editor loss, runtime failure, cancellation and
+recoverable commit errors have explicit paths. Runtime/model assets are reproducibly
+prepared in CI by `scripts/prepare-voice-runtime.sh`; the large ignored artifacts are not
+checked into Git. The keyboard manifest retains `RECORD_AUDIO` and no `INTERNET` permission.
+
+This is a source/static checkpoint only. Actions must still build the prepared APK, and a
+physical Android test must provide the required airplane-mode dictation, focus/lifecycle,
+mic start/stop and transcript evidence before Stage C is accepted.
+
 ## Next step
 
-Next gated step is to prove this baseline in GitHub Actions and retain an installable debug APK
-artifact from the checkpoint HEAD. Only after that gate passes may the first product Issue from the
-integrated voice MVP spec be implemented:
-
-1. import a clean current HeliBoard baseline while preserving licensing/history evidence;
-2. make the upstream baseline build cleanly before voice changes;
-3. identify and replace the current external voice-IME switch path;
-4. port the minimum Govorun offline ASR stack;
-5. produce the first reviewable Android build with internal offline dictation.
+Next gated step is to prove this runtime in GitHub Actions from a fresh checkout, including
+CI asset preparation and an installable APK artifact. Stage C then needs physical-device
+evidence for airplane-mode dictation, mic start/stop, focus changes and error recovery before
+the controller opens the next stage.
 
 No public release or merge to `main` is authorized by this status document alone.

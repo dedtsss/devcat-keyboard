@@ -1450,7 +1450,9 @@ public class LatinIME extends InputMethodService implements
                 case IDLE -> 0;
                 case PERMISSION_REQUIRED -> R.string.voice_status_permission_required;
                 case READY -> R.string.voice_status_ready;
-                case ERROR -> R.string.voice_status_runtime_unavailable;
+                case RECORDING -> R.string.voice_status_recording;
+                case TRANSCRIBING -> R.string.voice_status_transcribing;
+                case ERROR -> R.string.voice_error_runtime_failed;
             };
             mSuggestionStripView.setVoiceState(status == 0 ? null : getString(status));
         }
