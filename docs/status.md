@@ -4,7 +4,7 @@ Date: 2026-08-24
 Repository: `dedtsss/devcat-keyboard`  
 Product working name: **CatBoard**  
 Etalon baseline: v0.2.0  
-Stage: `Stage E / optional online cleanup boundary checkpoint / CI and device evidence pending`
+Stage: `Stage F / alpha delivery checkpoint / PARTIAL pending device evidence`
 
 ## Current state
 
@@ -103,20 +103,31 @@ permission, package-allowlist, missing-key, provider and IPC failure returns the
 local transcript for commit. The companion stores its provider Authorization Key separately
 under the existing Govorun preference name `gigachat_authorization_key`; no key is checked in.
 
-This remains a source/static checkpoint. The companion's exact-head CI build, installed
-cross-package smoke and provider smoke are still required; no live provider credential is
-currently available through the approved Bruce secret helper. Physical-device airplane-mode
-and lifecycle evidence remains deferred until engineering/CI work is complete.
+Exact-head Stage E CI is green at `b0f4afc40daad4291734331f9d5645a4602e719b`: push run
+`32743738093`, PR run `32743743021`, artifact `9526531713` (`310,357,002` bytes,
+SHA-256 `143a5a462af90765b7a9cdac67bc59c271722efd51642144281ad76c28760ed5`). The artifact
+contains the keyboard debug APK; the full optional-cleanup alpha requires the separately built
+`cleaner-companion` APK from the same head, installed companion-first, then keyboard.
 
-This is a source/static checkpoint only. Actions must still build both application modules,
-and a physical Android test must provide the required airplane-mode dictation, focus/lifecycle,
-mic start/stop and transcript evidence before the voice stages are accepted.
+Stage F static checks record the package boundary: `app` has `RECORD_AUDIO` and no INTERNET;
+`cleaner-companion` alone has INTERNET and owns the signature-level cleanup permission/service.
+Both application modules are explicit targets of the CI build. The keyboard is minSdk 21 and
+packages armeabi-v7a, arm64-v8a, x86 and x86_64; the bundled GigaAM v3/sherpa/VAD runtime is
+large and the debug APK is about 310 MB. Model assets are downloaded and hash-verified in CI,
+not committed. Runtime, memory, latency and public distribution limits remain unmeasured.
+
+No approved `gigachat_authorization_key` is available for live provider smoke. Physical-device
+installation, airplane-mode dictation, mic/focus lifecycle and installed cross-package IPC are
+also unverified. These are the only remaining evidence boundaries; engineering result is
+terminal `PARTIAL`, with the concise checklist in `SETUP.md`.
+
+This is a source/static and exact-head CI checkpoint only. Physical Android evidence is still
+required before claiming end-user acceptance.
 
 ## Next step
 
-Next gated step is to prove this Stage E checkpoint in GitHub Actions from a fresh checkout,
-including companion installation/IPC smoke where the workflow can support it.
-Physical-device evidence for airplane-mode dictation, mic start/stop, focus changes and error
-recovery remains deferred until all engineering/CI stages are complete by mission contract.
+The mission has no further engineering stage in this checkout. Controller push of the Stage F
+checkpoint requires one final exact-head Actions run because the build target and static check
+changed. No merge or release is authorized.
 
 No public release or merge to `main` is authorized by this status document alone.

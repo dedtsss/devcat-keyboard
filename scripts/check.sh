@@ -4,6 +4,7 @@ set -euo pipefail
 echo "== CatBoard project check =="
 
 bash ./scripts/doctor.sh
+bash ./scripts/check-package-boundary.sh
 if [[ "${CATBOARD_RUN_ANDROID:-0}" == "1" ]]; then
     bash ./scripts/prepare-voice-runtime.sh
 fi

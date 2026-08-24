@@ -1,8 +1,34 @@
 # Development setup
 
-## Current bootstrap state
+## Current alpha install/test notes
 
-Android source has not yet been imported into this repository. During bootstrap the meaningful repository check is:
+The exact Stage E/alpha debug artifact is built from commit
+`b0f4afc40daad4291734331f9d5645a4602e719b`:
+
+- GitHub Actions artifact `catboard-debug-b0f4afc40daad4291734331f9d5645a4602e719b`, id `9526531713`;
+- APK size `310,357,002` bytes, SHA-256
+  `143a5a462af90765b7a9cdac67bc59c271722efd51642144281ad76c28760ed5`;
+- push run `32743738093` and PR run `32743743021` passed; artifact expires 2026-11-22.
+
+Full alpha behavior uses two APKs. Install the companion first, then CatBoard, using APKs
+from the same exact CI head and the same signing identity. Enable CatBoard in Android keyboard
+settings, grant `RECORD_AUDIO` when prompted, and keep the companion installed only when the
+explicit online cleanup option is desired. Local dictation does not require the companion or
+network. The companion's provider key is configured separately and is not part of the artifact.
+
+Static package checks enforce that the keyboard has no `INTERNET`, the companion is the only
+network-capable package, and the signature-protected cleanup IPC plus microphone permission are
+present. `scripts/check.sh` builds both `:app:assembleDebug` and `:cleaner-companion:assembleDebug`
+in CI; Bruce must use the lightweight/static path and must not run local Android builds.
+
+Device checklist (still outstanding): install both APKs; enable CatBoard and grant mic; verify
+normal typing plus mic start/stop and focus/IME hide/show; dictate in airplane mode and confirm
+the local transcript is inserted; optionally configure an approved provider key and verify
+cleanup/fallback. No device or live-provider result is implied by CI.
+
+## Historical bootstrap notes
+
+Before the HeliBoard import, the meaningful bootstrap check was:
 
 ```bash
 ./scripts/check.sh
@@ -14,7 +40,7 @@ It validates the etalon structure and explicitly skips Android build/test while 
 
 The implementation PR must preserve a standard Android/Gradle wrapper workflow so a fresh clone can run without local IDE-specific state.
 
-Expected commands after import:
+The historical post-import command shape was:
 
 ```bash
 ./gradlew assembleDebug

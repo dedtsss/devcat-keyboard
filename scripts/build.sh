@@ -12,4 +12,4 @@ if [[ "${CATBOARD_RUN_ANDROID:-0}" != "1" ]]; then
 fi
 
 echo "== CatBoard Android debug build (GitHub Actions) =="
-./gradlew --no-daemon assembleDebug
+./gradlew --no-daemon :app:assembleDebug :cleaner-companion:assembleDebug
