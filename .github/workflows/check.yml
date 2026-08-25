@@ -15,8 +15,26 @@ jobs:
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
       - name: Make scripts executable
         run: chmod +x ./scripts/*.sh || true
 
       - name: Run check
+        env:
+          CATBOARD_RUN_ANDROID: '1'
         run: ./scripts/check.sh
+
+      - name: Upload Stage F debug APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: catboard-alpha-debug-${{ github.sha }}
+          path: |
+            app/build/outputs/apk/debug/CatBoard_*-debug.apk
+            cleaner-companion/build/outputs/apk/debug/cleaner-companion-debug.apk
+          if-no-files-found: error

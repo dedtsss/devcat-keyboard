@@ -11,3 +11,12 @@ Historical coordination pointers:
 From repository bootstrap onward, **this repository is authoritative for CatBoard product state**.
 
 `agent-dispatch` may keep cross-project coordination links/status, but new CatBoard implementation decisions and Issues belong here.
+
+## Imported Android baseline
+
+- Upstream: `HeliBorg/HeliBoard`
+- Revision: `50d13c1bd6c3f4ee6d69644b3d422145cb928503`
+- Boundary: imported HeliBoard Android source and its required attribution remain GPL-3.0;
+  Apache-2.0 and CC-BY-SA-4.0 notices are retained for the corresponding upstream assets.
+- Product adaptation: CatBoard application identity and CI/build harness are maintained in this
+  repository; the normal HeliBoard keyboard foundation is preserved.

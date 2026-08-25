@@ -1,10 +1,10 @@
 # Project Status
 
-Date: 2026-08-18  
+Date: 2026-08-25
 Repository: `dedtsss/devcat-keyboard`  
 Product working name: **CatBoard**  
 Etalon baseline: v0.2.0  
-Stage: `bootstrap / architecture accepted / implementation not started`
+Stage: `Stage F / alpha delivery checkpoint / PARTIAL pending device evidence`
 
 ## Current state
 
@@ -12,15 +12,21 @@ The repository was created from `dedtsss/etalon-project-template`.
 
 Accepted direction:
 
-- HeliBoard is the keyboard base;
+- HeliBoard is the keyboard base; the selected upstream revision is now imported;
 - Govorun/GigaAM voice recognition is embedded into the keyboard instead of running as a floating Accessibility overlay;
 - the toolbar microphone becomes a native CatBoard action;
 - local Russian ASR remains available fully offline;
-- optional online text cleanup is planned after local ASR is stable;
+- optional online text cleanup is user-operated, disabled by default, and isolated in the network-capable companion;
 - HeliBoard themes, emoji and clipboard are preserved and improved incrementally;
 - swipe typing is not a priority.
 
-Android product source has **not yet been imported**. Current work is repository bootstrap, durable architecture and the first implementation contract.
+Android product source is imported from HeliBoard revision `50d13c1bd6c3f4ee6d69644b3d422145cb928503`.
+The imported upstream code remains GPL-3.0, with source attribution and license texts retained in
+`LICENSE-HELIBOARD`; CatBoard-specific repository and harness files remain additive around that base.
+
+The internal alpha identity is `devcat.catboard` (debug: `devcat.catboard.debug`) with the
+`CatBoard` application label, allowing side-by-side installation with HeliBoard. The keyboard
+package still has no `android.permission.INTERNET`; optional online cleanup is isolated in the separate companion boundary.
 
 ## Accepted first architecture
 
@@ -71,14 +77,69 @@ The old Accessibility overlay, floating bird and modal recognition-dialog UX are
 5. Online cleanup must have a bounded timeout and a safe local-transcript fallback.
 6. Upstream HeliBoard updates should remain reasonably mergeable; avoid unnecessary invasive rewrites.
 
+## Current Stage C checkpoint
+
+The internal microphone route now owns the tap lifecycle: `AudioRecord` captures 16 kHz
+mono PCM, Silero VAD detects speech, sherpa-onnx runs the pinned GigaAM v3 RNNT model,
+local whitespace cleanup runs before the transcript is committed through the active
+`InputConnection`. Permission, no-speech, editor loss, runtime failure, cancellation and
+recoverable commit errors have explicit paths. Runtime/model assets are reproducibly
+prepared in CI by `scripts/prepare-voice-runtime.sh`; the large ignored artifacts are not
+checked into Git. The keyboard manifest retains `RECORD_AUDIO` and no `INTERNET` permission.
+
+Stage D source work adds compact suggestion-strip recording/transcribing/error feedback,
+cancels voice sessions when the editor or keyboard view changes, ignores rapid re-starts while
+AudioRecord is still releasing, handles recorder-construction failures, and releases the native
+recognizer/coroutine scope when the IME service is destroyed. Tap start/stop remains supported;
+hold-to-talk is deferred because the existing toolbar plumbing has no low-risk press/release seam.
+
+## Current Stage F / audit-correction checkpoint
+
+Audit correction checkpoint: cleanup is now user-operated from CatBoard settings (off by
+default, Light/Normal/Clean), while the companion launcher owns Save/Clear for its private
+provider key. Local transcript fallback has a 2.5 second keyboard deadline; companion HTTP
+connect/read limits are 2/5 seconds and late results are rejected after fallback or route
+change. Controller exact-head CI/artifact evidence is recorded durably in Issue #3 and PR #4;
+physical-device acceptance remains a separate external boundary.
+
+An optional `cleaner-companion` Android package owns `INTERNET` and exposes only an
+explicitly targeted, signature-protected transcript-cleaning Binder service. The keyboard
+client sends one local transcript and a cleanup mode only, with a 1-second bind bound and
+provider timeouts bounded inside the companion. The opt-in gate defaults off; every bind,
+permission, package-allowlist, missing-key, provider and IPC failure returns the original
+local transcript for commit. The companion stores its provider Authorization Key separately
+under the existing Govorun preference name `gigachat_authorization_key`; no key is checked in.
+
+Historical exact-head Stage E CI was green at `b0f4afc40daad4291734331f9d5645a4602e719b`: push run
+`32743738093`, PR run `32743743021`, artifact `9526531713` (`310,357,002` bytes,
+SHA-256 `143a5a462af90765b7a9cdac67bc59c271722efd51642144281ad76c28760ed5`). This historical
+artifact contains only the keyboard debug APK; it is not the full two-APK Stage F alpha. The
+full optional-cleanup alpha requires the `cleaner-companion` APK from the same head, installed
+companion-first, then keyboard.
+
+Stage F static checks record the package boundary: `app` has `RECORD_AUDIO` and no INTERNET;
+`cleaner-companion` alone has INTERNET and owns the signature-level cleanup permission/service.
+Both application modules are explicit targets of the CI build. The keyboard is minSdk 21 and
+packages armeabi-v7a, arm64-v8a, x86 and x86_64; the bundled GigaAM v3/sherpa/VAD runtime is
+large and the debug APK is about 310 MB. Model assets are downloaded and hash-verified in CI,
+not committed. Runtime, memory, latency and public distribution limits remain unmeasured.
+
+The Stage F workflow publishes both installable debug APKs together from one exact head with
+`if-no-files-found: error`. Mutable controller run IDs, artifact IDs/digests and final-head
+evidence are intentionally recorded in Issue #3 and PR #4 rather than embedded in this file.
+
+No approved `gigachat_authorization_key` is available for live provider smoke. Physical-device
+installation, airplane-mode dictation, mic/focus lifecycle and installed cross-package IPC are
+also unverified. These are the only remaining evidence boundaries; engineering result is
+terminal `PARTIAL`, with the concise checklist in `SETUP.md`.
+
+This is a source/static and exact-head CI checkpoint only. Physical Android evidence is still
+required before claiming end-user acceptance.
+
 ## Next step
 
-Create/execute the first product Issue from the integrated voice MVP spec:
-
-1. import a clean current HeliBoard baseline while preserving licensing/history evidence;
-2. make the upstream baseline build cleanly before voice changes;
-3. identify and replace the current external voice-IME switch path;
-4. port the minimum Govorun offline ASR stack;
-5. produce the first reviewable Android build with internal offline dictation.
+The mission has no further planned engineering stage after the audit correction. Keep the final
+branch head green in exact-head Actions and record its two-APK artifact evidence in Issue #3 / PR #4;
+then perform the remaining physical-device/provider checklist. No merge or release is authorized.
 
 No public release or merge to `main` is authorized by this status document alone.
