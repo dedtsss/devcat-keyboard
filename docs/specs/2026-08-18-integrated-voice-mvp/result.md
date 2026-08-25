@@ -1,6 +1,6 @@
 # Result — integrated voice MVP
 
-Status: PARTIAL — Stage F controller CI/artifact run pending; device/provider evidence deferred
+Status: PARTIAL — engineering/exact-head artifact evidence is controller-recorded; device/provider evidence deferred
 
 ## Historical Stage E checkpoint
 
@@ -24,13 +24,13 @@ Status: PARTIAL — Stage F controller CI/artifact run pending; device/provider 
 
 ## Stage F controller evidence
 
-The controller push and exact-head GitHub Actions run for the repaired workflow are pending. The
-workflow is configured to publish one artifact containing both installable debug APKs:
+The workflow publishes one exact-head artifact containing both installable debug APKs:
 
 - `app/build/outputs/apk/debug/CatBoard_*-debug.apk`;
 - `cleaner-companion/build/outputs/apk/debug/cleaner-companion-debug.apk`.
 
-Final exact-head Stage F CI/artifact success is not claimed until that run completes.
+Mutable final-head run IDs, artifact IDs/digests and ZIP-content verification are maintained in
+Issue #3 and PR #4 controller checkpoints rather than embedded in this source document.
 
 ## Terminal evidence boundary
 
@@ -56,5 +56,5 @@ The alpha now exposes optional cleanup in CatBoard settings, using the same priv
 preferences consumed by `VoiceController`. The default remains off. The companion has a
 launcher settings screen for obscured Save/Clear of its private GigaChat key. The keyboard
 retains the local transcript and commits it once after a 2.5 s overall cleanup deadline;
-late Binder/provider results cannot commit after fallback or a route change. Exact-head CI
-and physical-device evidence remain pending.
+late Binder/provider results cannot commit after fallback or a route change. Exact-head CI/
+artifact evidence is controller-recorded in Issue #3 / PR #4; physical-device evidence remains pending.

@@ -1,6 +1,6 @@
 # Project Status
 
-Date: 2026-08-24
+Date: 2026-08-25
 Repository: `dedtsss/devcat-keyboard`  
 Product working name: **CatBoard**  
 Etalon baseline: v0.2.0  
@@ -16,7 +16,7 @@ Accepted direction:
 - Govorun/GigaAM voice recognition is embedded into the keyboard instead of running as a floating Accessibility overlay;
 - the toolbar microphone becomes a native CatBoard action;
 - local Russian ASR remains available fully offline;
-- optional online text cleanup is planned after local ASR is stable;
+- optional online text cleanup is user-operated, disabled by default, and isolated in the network-capable companion;
 - HeliBoard themes, emoji and clipboard are preserved and improved incrementally;
 - swipe typing is not a priority.
 
@@ -26,7 +26,7 @@ The imported upstream code remains GPL-3.0, with source attribution and license 
 
 The internal alpha identity is `devcat.catboard` (debug: `devcat.catboard.debug`) with the
 `CatBoard` application label, allowing side-by-side installation with HeliBoard. The keyboard
-package still has no `android.permission.INTERNET`; online cleanup remains a later companion boundary.
+package still has no `android.permission.INTERNET`; optional online cleanup is isolated in the separate companion boundary.
 
 ## Accepted first architecture
 
@@ -93,13 +93,14 @@ AudioRecord is still releasing, handles recorder-construction failures, and rele
 recognizer/coroutine scope when the IME service is destroyed. Tap start/stop remains supported;
 hold-to-talk is deferred because the existing toolbar plumbing has no low-risk press/release seam.
 
-## Current Stage E checkpoint
+## Current Stage F / audit-correction checkpoint
 
 Audit correction checkpoint: cleanup is now user-operated from CatBoard settings (off by
 default, Light/Normal/Clean), while the companion launcher owns Save/Clear for its private
 provider key. Local transcript fallback has a 2.5 second keyboard deadline; companion HTTP
 connect/read limits are 2/5 seconds and late results are rejected after fallback or route
-change. This is source/static evidence only until exact-head CI and physical testing.
+change. Controller exact-head CI/artifact evidence is recorded durably in Issue #3 and PR #4;
+physical-device acceptance remains a separate external boundary.
 
 An optional `cleaner-companion` Android package owns `INTERNET` and exposes only an
 explicitly targeted, signature-protected transcript-cleaning Binder service. The keyboard
@@ -123,9 +124,9 @@ packages armeabi-v7a, arm64-v8a, x86 and x86_64; the bundled GigaAM v3/sherpa/VA
 large and the debug APK is about 310 MB. Model assets are downloaded and hash-verified in CI,
 not committed. Runtime, memory, latency and public distribution limits remain unmeasured.
 
-The Stage F controller push and exact-head Actions run/artifact publication are pending. The
-workflow is configured to publish both installable debug APKs together, but this checkout does
-not claim final exact-head CI or artifact evidence until that controller run completes.
+The Stage F workflow publishes both installable debug APKs together from one exact head with
+`if-no-files-found: error`. Mutable controller run IDs, artifact IDs/digests and final-head
+evidence are intentionally recorded in Issue #3 and PR #4 rather than embedded in this file.
 
 No approved `gigachat_authorization_key` is available for live provider smoke. Physical-device
 installation, airplane-mode dictation, mic/focus lifecycle and installed cross-package IPC are
@@ -137,8 +138,8 @@ required before claiming end-user acceptance.
 
 ## Next step
 
-The mission has no further engineering stage in this checkout. Controller push of the Stage F
-checkpoint requires one final exact-head Actions run because the build target and static check
-changed. No merge or release is authorized.
+The mission has no further planned engineering stage after the audit correction. Keep the final
+branch head green in exact-head Actions and record its two-APK artifact evidence in Issue #3 / PR #4;
+then perform the remaining physical-device/provider checklist. No merge or release is authorized.
 
 No public release or merge to `main` is authorized by this status document alone.
