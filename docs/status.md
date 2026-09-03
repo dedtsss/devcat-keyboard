@@ -19,8 +19,9 @@ GigaAM, sherpa-onnx, or VAD implementation is present in this baseline.
 
 `./scripts/check.sh` is the lightweight host-safe structure/provenance preflight.
 GitHub Actions job `check` is the authoritative Android build environment: it sets
-up JDK 17 and the pinned Android SDK/NDK, runs `:app:testRunTestsUnitTest`, and builds
-`:app:assembleDebug`. No emulator is required for this stage.
+up JDK 21 (required by Robolectric when testing against target SDK 36) and the pinned
+Android SDK/NDK, runs `:app:testRunTestsUnitTest`, and builds `:app:assembleDebug`.
+No emulator is required for this stage.
 
 Accepted direction:
 
