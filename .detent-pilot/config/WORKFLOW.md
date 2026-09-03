@@ -7,12 +7,26 @@ Issue's implementation acceptance criteria.
 Implementation role:
 - Reuse the existing worktree/branch/PR when Detent resumes or routes Rework.
 - Make the smallest correct implementation change.
-- Run focused checks and `./scripts/check.sh` before publishing the current head.
+- Run focused local checks before publishing the current head.
+- Run `./scripts/check.sh` locally only when the current Issue defines it as a
+  host-safe gate. For cloud-first/mobile tasks, `./scripts/check.sh` must remain
+  lightweight and must not bootstrap a heavy platform toolchain on the worker host.
 - Commit and push the implementation branch, then create or update exactly one
   implementation PR when needed. Include the Issue closing reference requested
   by the task.
 - On Rework, address the current Issue revision and validator findings on the
   same PR unless Detent explicitly provides a different work item.
+
+Execution environment policy:
+- CatVPS is primarily an orchestration/source-edit host, not a heavy build farm.
+- Android/mobile full builds, SDK/NDK bootstrap, emulator loops and device-style
+  validation belong in GitHub Actions or other explicitly approved cloud runners
+  unless the current Issue explicitly authorizes local execution.
+- Do not install Android SDK/NDK/emulator images or other heavy platform toolchains
+  on CatVPS merely to satisfy a build check.
+- When the Issue declares GitHub Actions authoritative, publish the implementation
+  head and let the required GitHub status check provide the full build evidence.
+  A missing local Android toolchain is not a product blocker in that case.
 
 Lifecycle ownership:
 - Detent/GitHub/CI own PR discovery/count, current-head CI/checks, labels/state,
