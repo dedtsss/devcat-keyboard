@@ -28,6 +28,19 @@ Execution environment policy:
   head and let the required GitHub status check provide the full build evidence.
   A missing local Android toolchain is not a product blocker in that case.
 
+Context discipline for large/imported repositories:
+- Do not recursively read, summarize, or diff an imported/vendor source tree merely
+  to prove that it exists. Prefer mechanical evidence: `git status --short`,
+  `git diff --stat`, targeted `git grep`, hashes/provenance files, and the Issue's
+  focused check command.
+- Avoid commands whose output dumps thousands of file paths or large source diffs
+  into model context. Keep command output bounded and inspect only files relevant
+  to a concrete acceptance criterion or failure.
+- If a resumed worktree already contains the intended large baseline and the
+  focused preflight passes, do not re-audit the baseline from scratch. Check for
+  accidental local/cache/credential files, exclude orchestration scratch data such
+  as `.detent/`, then commit, push, and publish the PR promptly.
+
 Lifecycle ownership:
 - Detent/GitHub/CI own PR discovery/count, current-head CI/checks, labels/state,
   validator scheduling, auto-promotion, mergeability, merge, retries and terminal
