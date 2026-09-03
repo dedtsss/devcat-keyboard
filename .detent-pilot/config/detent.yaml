@@ -42,7 +42,7 @@ deliverable:
 agent:
   max_concurrent_agents: 1
   max_turns: 8
-  max_session_tokens: 400000
+  max_session_tokens: 650000
   max_session_duration_ms: 1800000
   no_progress_timeout_ms: 900000
   merge_worker_max_duration_ms: 1800000
