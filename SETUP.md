@@ -14,7 +14,7 @@ cd devcat-keyboard
 ```
 
 GitHub Actions is the authoritative Android environment. Its `check` job installs
-JDK 17, Android platform/build tools 36, and NDK 28.0.13004108, then runs:
+JDK 21, Android platform/build tools 36, and NDK 28.0.13004108, then runs:
 
 ```bash
 ./scripts/test.sh
@@ -24,7 +24,9 @@ JDK 17, Android platform/build tools 36, and NDK 28.0.13004108, then runs:
 To reproduce that Android build from a fresh checkout elsewhere, install those
 same JDK/SDK/NDK versions (with accepted Android licenses) and run the two commands
 above. They execute `:app:testRunTestsUnitTest` and `:app:assembleDebug` through the
-checked-in Gradle wrapper. No emulator is needed for this Stage 1 baseline.
+checked-in Gradle wrapper. The `runTests` variant skips the network-only external
+link checks so this baseline gate does not depend on third-party site availability.
+No emulator is needed for this Stage 1 baseline.
 
 The Gradle wrapper pins Gradle 8.14 (including its distribution checksum); the
 project pins Android Gradle Plugin 8.13.2, compile/target SDK 36, and NDK
