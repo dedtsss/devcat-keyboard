@@ -1,0 +1,130 @@
+schema: 1
+tracker:
+  kind: github
+  github_status_source: label
+  repository: dedtsss/devcat-keyboard
+  status_label_prefix: "detent:"
+  auto_provision: true
+  active_states:
+    - Todo
+    - In Progress
+    - Rework
+    - Merging
+  observed_states:
+    - Backlog
+    - Human Review
+    - Blocked
+  terminal_states:
+    - Done
+    - Cancelled
+  state_map:
+    Cancelled: Done
+  dependency_auto_unblock:
+    enabled: false
+  blocked_recovery:
+    enabled: false
+  blocker_auto_promote:
+    enabled: false
+polling:
+  interval_ms: 60000
+  conditional: true
+worker:
+  github_token: gh
+intake:
+  sources: []
+workspace:
+  root: /home/codex/detent-pilot/catboard-worktrees
+  source_root: /home/codex/detent-pilot/catboard
+  cache_strategy: isolated
+  auto_branch: true
+deliverable:
+  merge_method: squash
+agent:
+  max_concurrent_agents: 1
+  max_turns: 8
+  max_session_tokens: 400000
+  max_session_duration_ms: 1800000
+  no_progress_timeout_ms: 900000
+  merge_worker_max_duration_ms: 1800000
+  max_retry_backoff_ms: 120000
+  auto_promote:
+    enabled: true
+    quiet_seconds: 30
+    gate_wait_state: review
+    gate_wait_timeout_seconds: 900
+    gate_wait_timeout_action: human_review
+    source_state: Human Review
+    pass_state: Merging
+    rework_state: Rework
+    rework_limit: 2
+  merge_fast_path:
+    enabled: true
+  skills:
+    enabled: false
+  followups:
+    enabled: false
+agents:
+  backends:
+    - id: codex-code
+      kind: codex
+      protocol: app-server
+      command: codex app-server
+      options:
+        approval_policy: never
+        thread_sandbox: workspace-write
+        turn_sandbox_policy:
+          type: workspaceWrite
+          networkAccess: true
+        turn_timeout_ms: 900000
+        read_timeout_ms: 5000
+        stall_timeout_ms: 120000
+    - id: codex-validator
+      kind: codex
+      protocol: app-server
+      command: codex app-server
+      options:
+        approval_policy: never
+        thread_sandbox: read-only
+        turn_sandbox_policy:
+          type: readOnly
+        turn_timeout_ms: 600000
+        read_timeout_ms: 5000
+        stall_timeout_ms: 120000
+  routes:
+    - name: validator
+      role: validator
+      backend: codex-validator
+    - name: default
+      backend: codex-code
+      default: true
+codex:
+  command: codex app-server
+  approval_policy: never
+  thread_sandbox: workspace-write
+  turn_sandbox_policy:
+    type: workspaceWrite
+    networkAccess: true
+gate:
+  kind: command
+  run: ./scripts/check.sh
+  require_automated_review: false
+  required_status_checks:
+    - check
+  ci_failure_action: rework
+  transient_ci_retry_limit: 1
+  validator:
+    enabled: true
+    min_score: 0.8
+    max_attempts: 2
+    max_inline_diff_bytes: 65536
+    block_on:
+      - p1
+      - p2
+server:
+  host: 127.0.0.1
+  kanban:
+    mode: read_only
+budget:
+  enabled: false
+hooks:
+  timeout_ms: 30000
