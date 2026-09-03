@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ -x "./gradlew" ]]; then
-  echo "== CatBoard Android build =="
-  ./gradlew assembleDebug
-else
-  echo "CatBoard Android source is not imported yet; Gradle build skipped during repository bootstrap."
+if [[ ! -x "./gradlew" ]]; then
+  echo "Missing executable Gradle wrapper: ./gradlew" >&2
+  exit 1
 fi
+
+echo "== CatBoard baseline Android debug build =="
+./gradlew --no-daemon :app:assembleDebug

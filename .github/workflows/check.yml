@@ -15,8 +15,29 @@ jobs:
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;28.0.13004108"
+
       - name: Make scripts executable
         run: chmod +x ./scripts/*.sh || true
 
-      - name: Run check
+      - name: Run lightweight source preflight
         run: ./scripts/check.sh
+
+      - name: Run baseline unit tests
+        run: ./scripts/test.sh
+
+      - name: Build baseline debug APK
+        run: ./scripts/build.sh

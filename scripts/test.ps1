@@ -1,9 +1,9 @@
 $ErrorActionPreference = "Stop"
 
-if (Test-Path ".\gradlew.bat") {
-    Write-Host "== CatBoard Android tests =="
-    & .\gradlew.bat test
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-} else {
-    Write-Host "CatBoard Android source is not imported yet; Gradle tests skipped during repository bootstrap."
+if (-not (Test-Path ".\gradlew.bat" -PathType Leaf)) {
+    throw "Missing Gradle wrapper: .\gradlew.bat"
 }
+
+Write-Host "== CatBoard baseline Android unit tests =="
+& .\gradlew.bat --no-daemon :app:testRunTestsUnitTest
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
