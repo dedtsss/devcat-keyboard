@@ -23,6 +23,7 @@ tracker:
     enabled: false
   blocked_recovery:
     enabled: false
+    breaker_cooldown_seconds: 300
   blocker_auto_promote:
     enabled: false
 polling:
