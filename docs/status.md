@@ -4,7 +4,7 @@ Date: 2026-09-04
 Repository: `dedtsss/devcat-keyboard`  
 Product working name: **CatBoard**  
 Etalon baseline: v0.2.0  
-Stage: `clean HeliBoard baseline imported / voice implementation not started`
+Stage: `Stage 2A internal voice route implemented / recording and ASR not started`
 
 ## Current state
 
@@ -13,9 +13,15 @@ The repository now contains a clean HeliBoard 4.1 source baseline imported from
 `9f5bb635c2e8609dcd95dc7506c0c58fba82a52c`. The exact import and license boundary
 is recorded in [`docs/upstream/heliboard.md`](upstream/heliboard.md).
 
-The Android application, Gradle wrapper, resources, layouts, and native keyboard
-sources remain identical to that upstream revision. No CatBoard voice, Govorun,
-GigaAM, sherpa-onnx, or VAD implementation is present in this baseline.
+CatBoard now intercepts the existing toolbar microphone action in `LatinIME` and
+routes it to an internal `VoiceController` instead of switching to an external
+shortcut IME. The controller owns bounded idle, permission-request,
+placeholder-ready, and error states. A non-exported activity requests
+`RECORD_AUDIO`, and denial or cancellation returns the controller to idle.
+
+Stage 2A does not add recording, recognition, GigaAM, sherpa-onnx, Silero VAD,
+model assets, or network access. A narrow future transcript-delivery method commits
+through the current `InputConnection` and retains text when that commit fails.
 
 `./scripts/check.sh` is the lightweight host-safe structure/provenance preflight.
 GitHub Actions job `check` is the authoritative Android build environment: it sets
@@ -33,8 +39,8 @@ Accepted direction:
 - HeliBoard themes, emoji and clipboard are preserved and improved incrementally;
 - swipe typing is not a priority.
 
-The accepted voice architecture below remains future scope; importing the baseline
-does not implement or validate it.
+Only the controller/permission/editor boundary of the accepted voice architecture
+is implemented. The audio and recognition portions remain future scope.
 
 ## Accepted first architecture
 
@@ -87,9 +93,8 @@ The old Accessibility overlay, floating bird and modal recognition-dialog UX are
 
 ## Next step
 
-After the Stage 1 baseline PR passes its authoritative GitHub Actions check and is
-merged, plan the next separately authorized issue. Voice/ASR integration, microphone
-behavior, `InputConnection` dictation, models, and device validation are not part of
-this baseline stage.
+After the Stage 2A PR passes its authoritative GitHub Actions check and is merged,
+plan the next separately authorized stage. Audio capture, ASR integration, models,
+airplane-mode dictation, and device validation are not part of Stage 2A.
 
 No public release or merge to `main` is authorized by this status document alone.
