@@ -154,6 +154,7 @@ public final class VoiceController {
         ++permissionRequestGeneration;
         recorder.cancel();
         capturedPcm = null;
+        segmenter.reset();
         setState(State.IDLE);
     }
 
