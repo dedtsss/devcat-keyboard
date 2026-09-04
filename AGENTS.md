@@ -8,10 +8,10 @@ GitHub and this repository are authoritative. Chat and external memory are aids 
 
 Before substantial work:
 
-1. Read the task/Issue and this file.
-2. Read relevant entries in `docs/decisions.md` and `docs/ideas.md`.
-3. Read `docs/status.md` and the relevant product document (`architecture`, `voice`, `privacy`, `clipboard`).
-4. For architecture/technology choices apply `docs/standards/engineering-principles.md` and check upstream/prior art before inventing a workaround.
+1. Read the current task/Issue and this file.
+2. Read only the specific entries/files needed for the current acceptance criterion or failure. Do not routinely replay all of `docs/decisions.md`, `docs/ideas.md`, `docs/status.md`, or every product document when those facts are unchanged.
+3. For a new architecture/technology choice, consult the relevant accepted decision/standard and proportional upstream/prior-art evidence before inventing a workaround.
+4. On Rework/recovery, start from current Git/PR/head and the concrete failure; do not reconstruct stable project context without a new reason.
 
 ## Product boundaries
 
@@ -43,13 +43,9 @@ Before substantial work:
 
 ## Verification
 
-Current unified check:
+`./scripts/check.sh` is the lightweight host-safe preflight. It must remain runnable on the worker host without installing Android SDK/NDK/emulator or performing the full Android Gradle build.
 
-```bash
-./scripts/check.sh
-```
-
-After HeliBoard source import, adapt the repository scripts to real Gradle build/test/lint commands and keep `scripts/check.sh` as the single entry point.
+The authoritative Android build/test gate belongs in GitHub Actions (or another explicitly approved cloud runner) and may invoke dedicated Gradle-backed scripts such as `scripts/test.sh` / `scripts/build.sh`. A missing local Android toolchain is not a reason to move the full build onto CatVPS.
 
 For voice changes, report at minimum:
 
