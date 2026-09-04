@@ -39,6 +39,7 @@ public final class VoiceController {
 
     private final Host host;
     private final PcmRecorder recorder;
+    private final VadSegmenter segmenter;
     private State state = State.IDLE;
     private String recoverableTranscript;
     private byte[] capturedPcm;
@@ -49,8 +50,15 @@ public final class VoiceController {
     }
 
     VoiceController(@NonNull final Host host, @NonNull final PcmRecorder recorder) {
+        this(host, recorder, VadSegmenter.passthroughAdapter());
+    }
+
+    VoiceController(@NonNull final Host host, @NonNull final PcmRecorder recorder,
+            @NonNull final VadSegmenter.Adapter vadAdapter) {
         this.host = host;
         this.recorder = recorder;
+        this.segmenter = new VadSegmenter(vadAdapter, AndroidPcmRecorder.MAX_CAPTURE_BYTES, 1,
+                pcm -> capturedPcm = pcm);
     }
 
     /** Handles the toolbar microphone action without switching to another IME. */
@@ -110,7 +118,10 @@ public final class VoiceController {
             setState(State.ERROR);
             return;
         }
-        capturedPcm = result.getPcm();
+        capturedPcm = null;
+        segmenter.reset();
+        segmenter.accept(result.getPcm());
+        segmenter.finish();
         setState(State.CAPTURE_READY);
     }
 
@@ -143,6 +154,7 @@ public final class VoiceController {
         ++permissionRequestGeneration;
         recorder.cancel();
         capturedPcm = null;
+        segmenter.reset();
         setState(State.IDLE);
     }
 
