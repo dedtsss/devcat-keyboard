@@ -44,9 +44,10 @@ agent:
   max_concurrent_agents: 1
   max_turns: 8
   # Emergency per-session traffic backstop. Cached input is counted repeatedly,
-  # so this is deliberately not the primary no-progress signal.
+  # so this is deliberately not the primary no-progress signal. Do not derive a
+  # smaller ceiling from the live context window: multi-turn cached traffic can
+  # exceed several context-window multiples while useful work is still advancing.
   max_session_tokens: 1500000
-  max_session_context_multiplier: 6
   max_session_duration_ms: 1800000
   # Cross-session progress brake. Detent resets this window on accepted PR/head,
   # mergeability, or red->green CI progress.

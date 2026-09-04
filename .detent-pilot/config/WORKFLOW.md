@@ -41,6 +41,25 @@ Context discipline for large/imported repositories:
   accidental local/cache/credential files, exclude orchestration scratch data such
   as `.detent/`, then commit, push, and publish the PR promptly.
 
+Code Mode round-trip discipline:
+- Within each bounded investigation or verification stage, group independent,
+  non-conflicting read/search/status operations into one outer `functions.exec`
+  call instead of serializing each operation through a separate model cycle.
+- When several independent nested tool calls are already known, use
+  `Promise.allSettled([...])` when partial results remain useful, or `Promise.all`
+  only when any failure should abort the whole batch. Inspect every returned
+  result before acting.
+- Keep dependent/adaptive steps, approvals, waits/resumes, and conflicting or
+  interdependent mutations sequential. Do not batch merely to increase breadth.
+- Bound the combined model-visible output of a batched stage. Prefer targeted
+  ranges/searches/summaries and small per-call output limits; aim for roughly
+  10-15k characters of combined evidence per investigation stage when practical.
+  If more evidence is genuinely needed, retrieve the next narrow slice in a
+  follow-up stage rather than dumping a large corpus at once.
+- A batch is successful only if it reduces outer model/tool cycles without hiding
+  required evidence through truncation. Full evidence may remain in Git/files/CI;
+  only the decision-relevant slice belongs in model context.
+
 Lifecycle ownership:
 - Detent/GitHub/CI own PR discovery/count, current-head CI/checks, labels/state,
   validator scheduling, auto-promotion, mergeability, merge, retries and terminal
