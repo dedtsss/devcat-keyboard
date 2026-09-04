@@ -12,14 +12,16 @@ import androidx.annotation.Nullable;
 /**
  * Owns the internal voice-action state boundary.
  *
- * <p>Recording and recognition deliberately do not live here yet. Stage 2A only establishes the
- * permission flow and the seam through which a later local recognizer can deliver a transcript.
+ * <p>Owns capture state and retains bounded PCM for the future local recognizer. Recognition does
+ * not live here.
  */
 public final class VoiceController {
     public enum State {
         IDLE,
         REQUESTING_PERMISSION,
-        READY_PLACEHOLDER,
+        RECORDING,
+        FINALIZING_CAPTURE,
+        CAPTURE_READY,
         ERROR
     }
 
@@ -32,22 +34,35 @@ public final class VoiceController {
         void requestMicrophonePermission(@NonNull PermissionResultCallback callback);
         @Nullable InputConnection getVoiceInputConnection();
         void onVoiceStateChanged(@NonNull State state);
+        void postVoiceCallback(@NonNull Runnable callback);
     }
 
     private final Host host;
+    private final PcmRecorder recorder;
     private State state = State.IDLE;
     private String recoverableTranscript;
+    private byte[] capturedPcm;
     private int permissionRequestGeneration;
 
     public VoiceController(@NonNull final Host host) {
+        this(host, new AndroidPcmRecorder());
+    }
+
+    VoiceController(@NonNull final Host host, @NonNull final PcmRecorder recorder) {
         this.host = host;
+        this.recorder = recorder;
     }
 
     /** Handles the toolbar microphone action without switching to another IME. */
     public void onVoiceAction() {
-        if (state == State.REQUESTING_PERMISSION) return;
+        if (state == State.RECORDING) {
+            setState(State.FINALIZING_CAPTURE);
+            recorder.stop();
+            return;
+        }
+        if (state == State.REQUESTING_PERMISSION || state == State.FINALIZING_CAPTURE) return;
         if (host.hasMicrophonePermission()) {
-            setState(State.READY_PLACEHOLDER);
+            startCapture();
             return;
         }
 
@@ -66,11 +81,37 @@ public final class VoiceController {
             return;
         }
         if (granted && host.hasMicrophonePermission()) {
-            // This means only that the Stage 2A seam is ready. No recorder or recognizer exists.
-            setState(State.READY_PLACEHOLDER);
+            startCapture();
         } else {
             setState(State.IDLE);
         }
+    }
+
+    private void startCapture() {
+        final int generation = ++permissionRequestGeneration;
+        capturedPcm = null;
+        final boolean started;
+        try {
+            started = recorder.start(result -> host.postVoiceCallback(
+                    () -> onCaptureComplete(generation, result)));
+        } catch (RuntimeException failure) {
+            setState(State.ERROR);
+            return;
+        }
+        setState(started ? State.RECORDING : State.ERROR);
+    }
+
+    private void onCaptureComplete(final int generation, @NonNull final PcmRecorder.Result result) {
+        if (generation != permissionRequestGeneration
+                || (state != State.RECORDING && state != State.FINALIZING_CAPTURE)) {
+            return;
+        }
+        if (!result.isSuccessful()) {
+            setState(State.ERROR);
+            return;
+        }
+        capturedPcm = result.getPcm();
+        setState(State.CAPTURE_READY);
     }
 
     /**
@@ -100,6 +141,8 @@ public final class VoiceController {
 
     public void cancel() {
         ++permissionRequestGeneration;
+        recorder.cancel();
+        capturedPcm = null;
         setState(State.IDLE);
     }
 
@@ -111,6 +154,12 @@ public final class VoiceController {
     @Nullable
     public String getRecoverableTranscript() {
         return recoverableTranscript;
+    }
+
+    /** Returns the last bounded PCM16 capture without transferring it outside the voice module. */
+    @Nullable
+    public byte[] getCapturedPcm() {
+        return capturedPcm == null ? null : capturedPcm.clone();
     }
 
     private void setState(@NonNull final State next) {

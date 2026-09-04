@@ -1468,8 +1468,12 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onVoiceStateChanged(@NonNull final VoiceController.State state) {
-        // Stage 2A intentionally exposes truthful state without claiming recording/recognition.
         Log.i(TAG, "Voice controller state: " + state);
+    }
+
+    @Override
+    public void postVoiceCallback(@NonNull final Runnable callback) {
+        mHandler.post(callback);
     }
 
     public void onTextInput(@Nullable String rawText) {
