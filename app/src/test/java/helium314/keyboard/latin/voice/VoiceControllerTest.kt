@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.latin.voice
 
+import android.media.AudioFormat
 import android.view.inputmethod.InputConnection
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -21,15 +22,87 @@ class VoiceControllerTest {
         assertEquals(VoiceController.State.IDLE, controller.state)
     }
 
-    @Test fun permissionGrantExposesPlaceholderReadinessOnly() {
+    @Test fun permissionGrantStartsCapture() {
         val host = FakeHost()
-        val controller = VoiceController(host)
+        val recorder = FakeRecorder()
+        val controller = VoiceController(host, recorder)
 
         controller.onVoiceAction()
         host.permissionGranted = true
         host.permissionCallback!!.onResult(true)
 
-        assertEquals(VoiceController.State.READY_PLACEHOLDER, controller.state)
+        assertEquals(VoiceController.State.RECORDING, controller.state)
+        assertEquals(1, recorder.startCount)
+    }
+
+    @Test fun secondTapStopsAndReturnsCapturedPcm() {
+        val host = FakeHost(permissionGranted = true)
+        val recorder = FakeRecorder()
+        val controller = VoiceController(host, recorder)
+
+        controller.onVoiceAction()
+        controller.onVoiceAction()
+        assertEquals(VoiceController.State.FINALIZING_CAPTURE, controller.state)
+        assertEquals(1, recorder.stopCount)
+
+        recorder.complete(byteArrayOf(1, 2, 3))
+        assertEquals(VoiceController.State.CAPTURE_READY, controller.state)
+        assertTrue(byteArrayOf(1, 2, 3).contentEquals(controller.capturedPcm))
+    }
+
+    @Test fun repeatedTapWhileFinalizingCannotStartOverlappingSession() {
+        val host = FakeHost(permissionGranted = true)
+        val recorder = FakeRecorder()
+        val controller = VoiceController(host, recorder)
+
+        controller.onVoiceAction()
+        controller.onVoiceAction()
+        controller.onVoiceAction()
+
+        assertEquals(1, recorder.startCount)
+        assertEquals(1, recorder.stopCount)
+    }
+
+    @Test fun captureStartFailureMovesToError() {
+        val host = FakeHost(permissionGranted = true)
+        val controller = VoiceController(host, FakeRecorder(startSucceeds = false))
+
+        controller.onVoiceAction()
+
+        assertEquals(VoiceController.State.ERROR, controller.state)
+    }
+
+    @Test fun captureFailureMovesToError() {
+        val host = FakeHost(permissionGranted = true)
+        val recorder = FakeRecorder()
+        val controller = VoiceController(host, recorder)
+
+        controller.onVoiceAction()
+        recorder.fail()
+
+        assertEquals(VoiceController.State.ERROR, controller.state)
+    }
+
+    @Test fun cancelReleasesCaptureAndIgnoresLateResult() {
+        val host = FakeHost(permissionGranted = true)
+        val recorder = FakeRecorder()
+        val controller = VoiceController(host, recorder)
+
+        controller.onVoiceAction()
+        val callback = recorder.callback!!
+        controller.cancel()
+        callback.onCaptureComplete(PcmRecorder.Result.captured(byteArrayOf(7)))
+
+        assertEquals(1, recorder.cancelCount)
+        assertEquals(VoiceController.State.IDLE, controller.state)
+        assertEquals(null, controller.capturedPcm)
+    }
+
+    @Test fun audioFormatAndCaptureAreBoundedForOfflinePipeline() {
+        assertEquals(16_000, AndroidPcmRecorder.SAMPLE_RATE_HZ)
+        assertEquals(AudioFormat.CHANNEL_IN_MONO, AndroidPcmRecorder.CHANNEL_CONFIG)
+        assertEquals(AudioFormat.ENCODING_PCM_16BIT, AndroidPcmRecorder.AUDIO_FORMAT)
+        assertEquals(1_920_000, AndroidPcmRecorder.MAX_CAPTURE_BYTES)
     }
 
     @Test fun cancelledPermissionResultCannotReactivateController() {
@@ -109,5 +182,28 @@ class VoiceControllerTest {
         override fun onVoiceStateChanged(state: VoiceController.State) {
             states += state
         }
+
+        override fun postVoiceCallback(callback: Runnable) = callback.run()
+    }
+
+    private class FakeRecorder(private val startSucceeds: Boolean = true) : PcmRecorder {
+        var callback: PcmRecorder.Callback? = null
+        var startCount = 0
+        var stopCount = 0
+        var cancelCount = 0
+
+        override fun start(callback: PcmRecorder.Callback): Boolean {
+            startCount++
+            this.callback = callback
+            return startSucceeds
+        }
+
+        override fun stop() { stopCount++ }
+
+        override fun cancel() { cancelCount++ }
+
+        fun complete(pcm: ByteArray) = callback!!.onCaptureComplete(PcmRecorder.Result.captured(pcm))
+
+        fun fail() = callback!!.onCaptureComplete(PcmRecorder.Result.error())
     }
 }
