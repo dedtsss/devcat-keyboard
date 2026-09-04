@@ -34,8 +34,12 @@ Repository: `dedtsss/devcat-keyboard`
 
 В репозиторий импортирован чистый исходный baseline HeliBoard 4.1. Исходники
 приложения и Gradle-конфигурация соответствуют upstream tag `v4.1`, commit
-`9f5bb635c2e8609dcd95dc7506c0c58fba82a52c`. CatBoard-specific voice/ASR-кода
-в baseline нет.
+`9f5bb635c2e8609dcd95dc7506c0c58fba82a52c`. В Stage 2A добавлены внутренний
+маршрут микрофона через `VoiceController` и flow разрешения `RECORD_AUDIO`; в
+Stage 2B — локальный захват через `AudioRecord`: 16 kHz, mono PCM16, с
+жизненным циклом start/stop/cancel/release и передачей PCM дальше по voice seam.
+VAD, sherpa, GigaAM, ASR, model assets, device acceptance и online cleanup ещё
+не реализованы.
 
 Актуальный статус и следующий шаг: [`docs/status.md`](docs/status.md).
 Точная граница импорта и лицензии: [`docs/upstream/heliboard.md`](docs/upstream/heliboard.md).
