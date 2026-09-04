@@ -32,11 +32,13 @@ Repository: `dedtsss/devcat-keyboard`
 
 ## Текущий статус
 
-Проект создан 18 августа 2026 года из `dedtsss/etalon-project-template`.
-
-Сейчас идёт bootstrap: продуктовые решения и первый MVP фиксируются в репозитории до импорта исходников HeliBoard. Код HeliBoard ещё не импортирован.
+В репозиторий импортирован чистый исходный baseline HeliBoard 4.1. Исходники
+приложения и Gradle-конфигурация соответствуют upstream tag `v4.1`, commit
+`9f5bb635c2e8609dcd95dc7506c0c58fba82a52c`. CatBoard-specific voice/ASR-кода
+в baseline нет.
 
 Актуальный статус и следующий шаг: [`docs/status.md`](docs/status.md).
+Точная граница импорта и лицензии: [`docs/upstream/heliboard.md`](docs/upstream/heliboard.md).
 
 ## MVP
 
@@ -95,7 +97,9 @@ GitHub — источник истины. Существенная разраб�
 ./scripts/check.sh
 ```
 
-Пока Android-исходники не импортированы, build/test scripts явно пропускают Android-часть. После импорта HeliBoard они должны быть переключены на реальные Gradle-команды.
+Команда выполняет быстрый source/provenance preflight без Android SDK и Gradle build.
+Authoritative unit tests и debug build запускает job `check` в GitHub Actions через
+закреплённый Gradle wrapper. Требования к чистому checkout описаны в [`SETUP.md`](SETUP.md).
 
 ## Название
 

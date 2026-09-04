@@ -1,14 +1,27 @@
 # Project Status
 
-Date: 2026-08-18  
+Date: 2026-09-04
 Repository: `dedtsss/devcat-keyboard`  
 Product working name: **CatBoard**  
 Etalon baseline: v0.2.0  
-Stage: `bootstrap / architecture accepted / implementation not started`
+Stage: `clean HeliBoard baseline imported / voice implementation not started`
 
 ## Current state
 
-The repository was created from `dedtsss/etalon-project-template`.
+The repository now contains a clean HeliBoard 4.1 source baseline imported from
+`HeliBorg/HeliBoard` tag `v4.1`, commit
+`9f5bb635c2e8609dcd95dc7506c0c58fba82a52c`. The exact import and license boundary
+is recorded in [`docs/upstream/heliboard.md`](upstream/heliboard.md).
+
+The Android application, Gradle wrapper, resources, layouts, and native keyboard
+sources remain identical to that upstream revision. No CatBoard voice, Govorun,
+GigaAM, sherpa-onnx, or VAD implementation is present in this baseline.
+
+`./scripts/check.sh` is the lightweight host-safe structure/provenance preflight.
+GitHub Actions job `check` is the authoritative Android build environment: it sets
+up JDK 21 (required by Robolectric when testing against target SDK 36) and the pinned
+Android SDK/NDK, runs `:app:testRunTestsUnitTest`, and builds `:app:assembleDebug`.
+No emulator is required for this stage.
 
 Accepted direction:
 
@@ -20,7 +33,8 @@ Accepted direction:
 - HeliBoard themes, emoji and clipboard are preserved and improved incrementally;
 - swipe typing is not a priority.
 
-Android product source has **not yet been imported**. Current work is repository bootstrap, durable architecture and the first implementation contract.
+The accepted voice architecture below remains future scope; importing the baseline
+does not implement or validate it.
 
 ## Accepted first architecture
 
@@ -73,12 +87,9 @@ The old Accessibility overlay, floating bird and modal recognition-dialog UX are
 
 ## Next step
 
-Create/execute the first product Issue from the integrated voice MVP spec:
-
-1. import a clean current HeliBoard baseline while preserving licensing/history evidence;
-2. make the upstream baseline build cleanly before voice changes;
-3. identify and replace the current external voice-IME switch path;
-4. port the minimum Govorun offline ASR stack;
-5. produce the first reviewable Android build with internal offline dictation.
+After the Stage 1 baseline PR passes its authoritative GitHub Actions check and is
+merged, plan the next separately authorized issue. Voice/ASR integration, microphone
+behavior, `InputConnection` dictation, models, and device validation are not part of
+this baseline stage.
 
 No public release or merge to `main` is authorized by this status document alone.

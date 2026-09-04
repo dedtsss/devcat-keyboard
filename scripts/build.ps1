@@ -1,9 +1,9 @@
 $ErrorActionPreference = "Stop"
 
-if (Test-Path ".\gradlew.bat") {
-    Write-Host "== CatBoard Android build =="
-    & .\gradlew.bat assembleDebug
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-} else {
-    Write-Host "CatBoard Android source is not imported yet; Gradle build skipped during repository bootstrap."
+if (-not (Test-Path ".\gradlew.bat" -PathType Leaf)) {
+    throw "Missing Gradle wrapper: .\gradlew.bat"
 }
+
+Write-Host "== CatBoard baseline Android debug build =="
+& .\gradlew.bat --no-daemon :app:assembleDebug
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

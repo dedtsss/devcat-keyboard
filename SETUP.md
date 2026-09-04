@@ -1,27 +1,39 @@
 # Development setup
 
-## Current bootstrap state
+## Baseline build
 
-Android source has not yet been imported into this repository. During bootstrap the meaningful repository check is:
+CatBoard currently carries the clean HeliBoard 4.1 Android baseline.
+
+The host-safe repository preflight needs Bash and Git, but does not need Java,
+Gradle, an Android SDK/NDK, or an emulator:
 
 ```bash
+git clone https://github.com/dedtsss/devcat-keyboard.git
+cd devcat-keyboard
 ./scripts/check.sh
 ```
 
-It validates the etalon structure and explicitly skips Android build/test while `gradlew` is absent.
-
-## After HeliBoard baseline import
-
-The implementation PR must preserve a standard Android/Gradle wrapper workflow so a fresh clone can run without local IDE-specific state.
-
-Expected commands after import:
+GitHub Actions is the authoritative Android environment. Its `check` job installs
+JDK 21, Android platform/build tools 36, and NDK 28.0.13004108, then runs:
 
 ```bash
-./gradlew assembleDebug
-./gradlew test
+./scripts/test.sh
+./scripts/build.sh
 ```
 
-`scripts/build.sh`, `scripts/test.sh` and PowerShell equivalents should wrap the actual project commands once the source layout is known.
+To reproduce that Android build from a fresh checkout elsewhere, install those
+same JDK/SDK/NDK versions (with accepted Android licenses) and run the two commands
+above. They execute `:app:testRunTestsUnitTest` and `:app:assembleDebug` through the
+checked-in Gradle wrapper. The `runTests` variant skips the network-only external
+link checks so this baseline gate does not depend on third-party site availability.
+No emulator is needed for this Stage 1 baseline.
+
+The Gradle wrapper pins Gradle 8.14 (including its distribution checksum); the
+project pins Android Gradle Plugin 8.13.2, compile/target SDK 36, and NDK
+28.0.13004108. Build outputs and local SDK/cache files are ignored by Git.
+
+See [`docs/upstream/heliboard.md`](docs/upstream/heliboard.md) for source provenance
+and the exact import boundary.
 
 ## Voice-model dependencies
 
