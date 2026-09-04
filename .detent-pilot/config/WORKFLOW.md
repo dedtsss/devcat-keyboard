@@ -41,33 +41,19 @@ Context discipline for large/imported repositories:
   accidental local/cache/credential files, exclude orchestration scratch data such
   as `.detent/`, then commit, push, and publish the PR promptly.
 
-Code Mode round-trip discipline:
-- Within each bounded investigation or verification stage, group independent,
-  non-conflicting read/search/status operations into one outer `functions.exec`
-  call instead of serializing each operation through a separate model cycle.
-- When several independent nested tool calls are already known, use
-  `Promise.allSettled([...])` when partial results remain useful, or `Promise.all`
-  only when any failure should abort the whole batch. Inspect every returned
-  result before acting.
-- Keep dependent/adaptive steps, approvals, waits/resumes, and conflicting or
-  interdependent mutations sequential. Do not batch merely to increase breadth.
-- Never inspect, filter, stringify, or print `ALL_TOOLS` / the full tool catalog
-  merely to discover how to batch work. Tool-catalog dumps are not task evidence
-  and can exceed the entire useful context of a stage. Use already-known tool
-  names; if discovery is genuinely required, use one narrowly targeted tool
-  search and return only the matching tool names/signatures needed now.
-- Bound the combined model-visible output of a batched stage. Prefer targeted
-  ranges/searches/summaries and small per-call output limits. Treat 12k characters
-  of combined evidence as a hard planning ceiling for an ordinary investigation
-  stage unless the current acceptance criterion genuinely requires more.
-- Do not serialize whole nested result objects, full command results, tool
-  catalogs, or large arrays with `text(JSON.stringify(...))`. Extract only the
-  decision-relevant fields/snippets and keep each nested call independently
-  bounded. If combined output would exceed the stage ceiling, summarize locally
-  or retrieve a smaller slice instead of emitting the raw aggregate.
-- A batch is successful only if it reduces outer model/tool cycles without hiding
-  required evidence through truncation. Full evidence may remain in Git/files/CI;
-  only the decision-relevant slice belongs in model context.
+Tool-output and round-trip discipline:
+- Use targeted reads/searches and keep model-visible tool output bounded to the
+  concrete question being answered. Never dump `ALL_TOOLS`, a full tool catalog,
+  huge arrays, repository-wide file lists, or whole nested result objects into
+  model context merely for discovery or convenience.
+- Use a bounded multi-file/read-search command when it is naturally the shortest
+  way to answer one concrete question, but do not follow a global batching rule
+  and do not create extra breadth just to reduce outer calls. Dependent/adaptive
+  steps remain sequential.
+- Prefer extracting decision-relevant fields/snippets locally over emitting raw
+  aggregate results. If more evidence is needed, retrieve the next narrow slice.
+- For known long-running commands, use the configured long wait instead of short
+  polling loops or repeated process/status probes.
 
 Lifecycle ownership:
 - Detent/GitHub/CI own PR discovery/count, current-head CI/checks, labels/state,

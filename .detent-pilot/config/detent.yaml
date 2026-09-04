@@ -90,7 +90,7 @@ agents:
     - id: codex-code
       kind: codex
       protocol: app-server
-      command: codex app-server
+      command: codex -c model=gpt-5.6-luna -c model_reasoning_effort=medium -c tool_output_token_limit=5000 -c model_auto_compact_token_limit=96000 app-server
       options:
         approval_policy: never
         thread_sandbox: workspace-write
@@ -103,7 +103,7 @@ agents:
     - id: codex-validator
       kind: codex
       protocol: app-server
-      command: codex app-server
+      command: codex -c model=gpt-5.6-luna -c model_reasoning_effort=medium -c tool_output_token_limit=5000 -c model_auto_compact_token_limit=96000 app-server
       options:
         approval_policy: never
         thread_sandbox: read-only
@@ -120,7 +120,7 @@ agents:
       backend: codex-code
       default: true
 codex:
-  command: codex app-server
+  command: codex -c model=gpt-5.6-luna -c model_reasoning_effort=medium -c tool_output_token_limit=5000 -c model_auto_compact_token_limit=96000 app-server
   approval_policy: never
   thread_sandbox: workspace-write
   turn_sandbox_policy:
