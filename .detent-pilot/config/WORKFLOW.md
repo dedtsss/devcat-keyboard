@@ -51,11 +51,20 @@ Code Mode round-trip discipline:
   result before acting.
 - Keep dependent/adaptive steps, approvals, waits/resumes, and conflicting or
   interdependent mutations sequential. Do not batch merely to increase breadth.
+- Never inspect, filter, stringify, or print `ALL_TOOLS` / the full tool catalog
+  merely to discover how to batch work. Tool-catalog dumps are not task evidence
+  and can exceed the entire useful context of a stage. Use already-known tool
+  names; if discovery is genuinely required, use one narrowly targeted tool
+  search and return only the matching tool names/signatures needed now.
 - Bound the combined model-visible output of a batched stage. Prefer targeted
-  ranges/searches/summaries and small per-call output limits; aim for roughly
-  10-15k characters of combined evidence per investigation stage when practical.
-  If more evidence is genuinely needed, retrieve the next narrow slice in a
-  follow-up stage rather than dumping a large corpus at once.
+  ranges/searches/summaries and small per-call output limits. Treat 12k characters
+  of combined evidence as a hard planning ceiling for an ordinary investigation
+  stage unless the current acceptance criterion genuinely requires more.
+- Do not serialize whole nested result objects, full command results, tool
+  catalogs, or large arrays with `text(JSON.stringify(...))`. Extract only the
+  decision-relevant fields/snippets and keep each nested call independently
+  bounded. If combined output would exceed the stage ceiling, summarize locally
+  or retrieve a smaller slice instead of emitting the raw aggregate.
 - A batch is successful only if it reduces outer model/tool cycles without hiding
   required evidence through truncation. Full evidence may remain in Git/files/CI;
   only the decision-relevant slice belongs in model context.
