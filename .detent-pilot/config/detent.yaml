@@ -43,9 +43,26 @@ deliverable:
 agent:
   max_concurrent_agents: 1
   max_turns: 8
+  # Emergency per-session traffic backstop. Cached input is counted repeatedly,
+  # so this is deliberately not the primary no-progress signal.
   max_session_tokens: 1500000
+  max_session_context_multiplier: 6
   max_session_duration_ms: 1800000
+  # Cross-session progress brake. Detent resets this window on accepted PR/head,
+  # mergeability, or red->green CI progress.
+  no_progress_token_limit: 2000000
   no_progress_timeout_ms: 900000
+  instructions_by_state:
+    Rework: |-
+      Treat Rework as a delta repair, not a fresh implementation run. Reuse the
+      existing worktree, branch and PR. Start from the current PR/head and the
+      exact current CI failure or validator finding. Inspect only the changed
+      files and acceptance criteria directly implicated by that failure. Do not
+      reread stable project architecture, re-audit an imported/vendor baseline,
+      replay the original task history, or re-prove already completed criteria
+      without a concrete new reason. Make the smallest repair, run the smallest
+      useful host-safe preflight, commit/push the same PR head, report the delta,
+      and stop. GitHub/Detent own CI observation and the next lifecycle decision.
   merge_worker_max_duration_ms: 1800000
   max_retry_backoff_ms: 120000
   auto_promote:
@@ -58,6 +75,9 @@ agent:
     pass_state: Merging
     rework_state: Rework
     rework_limit: 2
+    # Keep the stock count-based brake conservative. The primary token brake is
+    # progress-based above; do not tighten this until another real task proves it.
+    no_progress_limit: 3
   merge_fast_path:
     enabled: true
   skills:
