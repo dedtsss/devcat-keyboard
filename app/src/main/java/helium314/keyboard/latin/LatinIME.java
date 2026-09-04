@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.os.Debug;
 import android.os.Message;
 import android.os.Process;
+import android.os.ResultReceiver;
 import android.util.PrintWriterPrinter;
 import android.util.Printer;
 import android.view.KeyEvent;
@@ -88,6 +89,8 @@ import helium314.keyboard.latin.utils.SubtypeLocaleUtils;
 import helium314.keyboard.latin.utils.SubtypeSettings;
 import helium314.keyboard.latin.utils.SubtypeState;
 import helium314.keyboard.latin.utils.ToolbarMode;
+import helium314.keyboard.latin.voice.VoiceController;
+import helium314.keyboard.latin.voice.VoicePermissionActivity;
 import helium314.keyboard.settings.SettingsActivity2;
 import kotlin.Unit;
 
@@ -108,7 +111,7 @@ import androidx.core.content.ContextCompat;
  */
 public class LatinIME extends InputMethodService implements
         SuggestionStripView.Listener, SuggestionStripViewAccessor,
-        DictionaryFacilitator.DictionaryInitializationListener {
+        DictionaryFacilitator.DictionaryInitializationListener, VoiceController.Host {
     static final String TAG = LatinIME.class.getSimpleName();
     private static final boolean TRACE = false;
 
@@ -117,6 +120,8 @@ public class LatinIME extends InputMethodService implements
     private static final int PENDING_IMS_CALLBACK_DURATION_MILLIS = 800;
     static final long DELAY_WAIT_FOR_DICTIONARY_LOAD_MILLIS = TimeUnit.SECONDS.toMillis(2);
     static final long DELAY_DEALLOCATE_MEMORY_MILLIS = TimeUnit.SECONDS.toMillis(10);
+
+    private VoiceController mVoiceController;
 
     /**
      * The name of the scheme used by the Package Manager to warn of a new package installation,
@@ -547,6 +552,7 @@ public class LatinIME extends InputMethodService implements
         mDisplayContext = KtxKt.getDisplayContext(this);
         KeyboardSwitcher.init(this);
         super.onCreate();
+        mVoiceController = new VoiceController(this);
 
         loadSettings();
         mClipboardHistoryManager.onCreate();
@@ -692,6 +698,7 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onDestroy() {
+        if (mVoiceController != null) mVoiceController.cancel();
         mClipboardHistoryManager.onDestroy();
         mDictionaryFacilitator.closeDictionaries();
         mSettings.onDestroy();
@@ -1013,6 +1020,10 @@ public class LatinIME extends InputMethodService implements
     @Override
     public void onWindowHidden() {
         super.onWindowHidden();
+        if (mVoiceController != null
+                && mVoiceController.getState() != VoiceController.State.REQUESTING_PERMISSION) {
+            mVoiceController.cancel();
+        }
         Log.i(TAG, "onWindowHidden");
         final MainKeyboardView mainKeyboardView = mKeyboardSwitcher.getMainKeyboardView();
         if (mainKeyboardView != null) {
@@ -1022,6 +1033,10 @@ public class LatinIME extends InputMethodService implements
     }
 
     void onFinishInputInternal() {
+        if (mVoiceController != null
+                && mVoiceController.getState() != VoiceController.State.REQUESTING_PERMISSION) {
+            mVoiceController.cancel();
+        }
         super.onFinishInput();
         Log.i(TAG, "onFinishInput");
 
@@ -1411,7 +1426,8 @@ public class LatinIME extends InputMethodService implements
     // completely replace #onCodeInput.
     public void onEvent(@NonNull final Event event) {
         if (KeyCode.VOICE_INPUT == event.getKeyCode()) {
-            mRichImm.switchToShortcutIme(this);
+            mVoiceController.onVoiceAction();
+            return;
         }
         final InputTransaction completeInputTransaction =
                 mInputLogic.onCodeInput(mSettings.getCurrent(), event,
@@ -1419,6 +1435,41 @@ public class LatinIME extends InputMethodService implements
                         mKeyboardSwitcher.getCurrentKeyboardScript(), mHandler);
         updateStateAfterInputTransaction(completeInputTransaction);
         mKeyboardSwitcher.onEvent(event, getCurrentAutoCapsState(), getCurrentRecapitalizeState());
+    }
+
+    @Override
+    public boolean hasMicrophonePermission() {
+        return ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED;
+    }
+
+    @Override
+    public void requestMicrophonePermission(
+            @NonNull final VoiceController.PermissionResultCallback callback) {
+        final Intent intent = new Intent(this, VoicePermissionActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(VoicePermissionActivity.EXTRA_RESULT_RECEIVER,
+                new ResultReceiver(mHandler) {
+                    @Override
+                    protected void onReceiveResult(final int resultCode,
+                            final Bundle resultData) {
+                        callback.onResult(resultCode
+                                == VoicePermissionActivity.RESULT_PERMISSION_GRANTED);
+                    }
+                });
+        startActivity(intent);
+    }
+
+    @Nullable
+    @Override
+    public android.view.inputmethod.InputConnection getVoiceInputConnection() {
+        return getCurrentInputConnection();
+    }
+
+    @Override
+    public void onVoiceStateChanged(@NonNull final VoiceController.State state) {
+        // Stage 2A intentionally exposes truthful state without claiming recording/recognition.
+        Log.i(TAG, "Voice controller state: " + state);
     }
 
     public void onTextInput(@Nullable String rawText) {

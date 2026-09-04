@@ -12,9 +12,9 @@ Status: planned
 
 ## B. Voice integration seam
 
-- [ ] Trace `VOICE -> VOICE_INPUT -> LatinIME` path in imported revision.
-- [ ] Add internal `VoiceController` with explicit state ownership.
-- [ ] Replace external shortcut-IME switch only for CatBoard voice action.
+- [x] Trace `VOICE -> VOICE_INPUT -> LatinIME` path in imported revision.
+- [x] Add internal `VoiceController` with explicit state ownership.
+- [x] Replace external shortcut-IME switch only for CatBoard voice action.
 - [ ] Add basic in-keyboard recording/processing state indication.
 
 ## C. Govorun ASR port
@@ -30,7 +30,7 @@ Status: planned
 ## D. Editor commit and failure safety
 
 - [ ] Commit transcript through active `InputConnection`.
-- [ ] Handle permission denied.
+- [x] Handle permission denied.
 - [ ] Handle empty/no-speech result.
 - [ ] Handle IME/editor focus loss.
 - [ ] Keep transcript recoverable after post-ASR failure.
