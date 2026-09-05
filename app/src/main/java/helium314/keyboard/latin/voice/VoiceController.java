@@ -171,6 +171,16 @@ public final class VoiceController {
         setState(State.IDLE);
     }
 
+    /** Releases capture and recognizer resources when the IME is destroyed. */
+    public void destroy() {
+        ++permissionRequestGeneration;
+        recorder.release();
+        capturedPcm = null;
+        segmenter.reset();
+        if (runtime != null) runtime.destroy();
+        setState(State.IDLE);
+    }
+
     @NonNull
     public State getState() {
         return state;
