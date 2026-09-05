@@ -36,8 +36,20 @@ jobs:
       - name: Run lightweight source preflight
         run: ./scripts/check.sh
 
-      - name: Run baseline unit tests
+      - name: Prepare offline voice runtime
+        run: ./scripts/prepare-voice-runtime.sh
+
+      - name: Run Android unit tests
         run: ./scripts/test.sh
 
-      - name: Build baseline debug APK
+      - name: Build CatBoard and cleaner companion debug APKs
         run: ./scripts/build.sh
+
+      - name: Upload alpha debug APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: catboard-alpha-debug-${{ github.sha }}
+          path: |
+            app/build/outputs/apk/debug/CatBoard_*-debug.apk
+            cleaner-companion/build/outputs/apk/debug/cleaner-companion-debug.apk
+          if-no-files-found: error
