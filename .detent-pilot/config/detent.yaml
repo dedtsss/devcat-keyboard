@@ -90,7 +90,7 @@ agents:
     - id: codex-code
       kind: codex
       protocol: app-server
-      command: codex -c model=gpt-5.6-luna -c model_reasoning_effort=medium -c tool_output_token_limit=5000 -c model_auto_compact_token_limit=96000 app-server
+      command: codex-business -c model=gpt-5.6-luna -c model_reasoning_effort=medium -c tool_output_token_limit=5000 -c model_auto_compact_token_limit=96000 app-server
       options:
         approval_policy: never
         thread_sandbox: workspace-write
@@ -103,7 +103,32 @@ agents:
     - id: codex-validator
       kind: codex
       protocol: app-server
-      command: codex -c model=gpt-5.6-luna -c model_reasoning_effort=medium -c tool_output_token_limit=5000 -c model_auto_compact_token_limit=96000 app-server
+      command: codex-business -c model=gpt-5.6-luna -c model_reasoning_effort=medium -c tool_output_token_limit=5000 -c model_auto_compact_token_limit=96000 app-server
+      options:
+        approval_policy: never
+        thread_sandbox: read-only
+        turn_sandbox_policy:
+          type: readOnly
+        turn_timeout_ms: 600000
+        read_timeout_ms: 5000
+        stall_timeout_ms: 120000
+    - id: codex-plus-code
+      kind: codex
+      protocol: app-server
+      command: codex-plus -c model=gpt-5.6-luna -c model_reasoning_effort=medium -c tool_output_token_limit=5000 -c model_auto_compact_token_limit=96000 app-server
+      options:
+        approval_policy: never
+        thread_sandbox: workspace-write
+        turn_sandbox_policy:
+          type: workspaceWrite
+          networkAccess: true
+        turn_timeout_ms: 900000
+        read_timeout_ms: 5000
+        stall_timeout_ms: 120000
+    - id: codex-plus-validator
+      kind: codex
+      protocol: app-server
+      command: codex-plus -c model=gpt-5.6-luna -c model_reasoning_effort=medium -c tool_output_token_limit=5000 -c model_auto_compact_token_limit=96000 app-server
       options:
         approval_policy: never
         thread_sandbox: read-only
@@ -113,6 +138,34 @@ agents:
         read_timeout_ms: 5000
         stall_timeout_ms: 120000
   routes:
+    - name: plus-code
+      role: code
+      backend: codex-plus-code
+      selector:
+        labels:
+          include:
+            - codex:plus
+    - name: plus-rework
+      role: rework
+      backend: codex-plus-code
+      selector:
+        labels:
+          include:
+            - codex:plus
+    - name: plus-merge
+      role: merge
+      backend: codex-plus-code
+      selector:
+        labels:
+          include:
+            - codex:plus
+    - name: plus-validator
+      role: validator
+      backend: codex-plus-validator
+      selector:
+        labels:
+          include:
+            - codex:plus
     - name: validator
       role: validator
       backend: codex-validator
@@ -120,7 +173,7 @@ agents:
       backend: codex-code
       default: true
 codex:
-  command: codex -c model=gpt-5.6-luna -c model_reasoning_effort=medium -c tool_output_token_limit=5000 -c model_auto_compact_token_limit=96000 app-server
+  command: codex-business -c model=gpt-5.6-luna -c model_reasoning_effort=medium -c tool_output_token_limit=5000 -c model_auto_compact_token_limit=96000 app-server
   approval_policy: never
   thread_sandbox: workspace-write
   turn_sandbox_policy:
