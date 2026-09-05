@@ -5,6 +5,7 @@
 package helium314.keyboard.latin.voice;
 
 import android.view.inputmethod.InputConnection;
+import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +31,8 @@ public final class VoiceController {
     }
 
     public interface Host {
+        /** Context used only to initialize the embedded offline recognizer. */
+        @Nullable default Context getVoiceContext() { return null; }
         boolean hasMicrophonePermission();
         void requestMicrophonePermission(@NonNull PermissionResultCallback callback);
         @Nullable InputConnection getVoiceInputConnection();
@@ -44,6 +47,7 @@ public final class VoiceController {
     private String recoverableTranscript;
     private byte[] capturedPcm;
     private int permissionRequestGeneration;
+    @Nullable private final VoiceRuntime runtime;
 
     public VoiceController(@NonNull final Host host) {
         this(host, new AndroidPcmRecorder());
@@ -59,6 +63,14 @@ public final class VoiceController {
         this.recorder = recorder;
         this.segmenter = new VadSegmenter(vadAdapter, AndroidPcmRecorder.MAX_CAPTURE_BYTES, 1,
                 pcm -> capturedPcm = pcm);
+        final Context context = host.getVoiceContext();
+        runtime = context == null ? null : new VoiceRuntime(context, new VoiceRuntime.Listener() {
+            @Override public void onRecordingStarted() { }
+            @Override public void onTranscribing() { setState(State.FINALIZING_CAPTURE); }
+            @Override public void onTranscript(@NonNull final String text) { deliverTranscript(text); }
+            @Override public void onNoSpeech() { setState(State.IDLE); }
+            @Override public void onFailure() { setState(State.ERROR); }
+        });
     }
 
     /** Handles the toolbar microphone action without switching to another IME. */
@@ -122,7 +134,8 @@ public final class VoiceController {
         segmenter.reset();
         segmenter.accept(result.getPcm());
         segmenter.finish();
-        setState(State.CAPTURE_READY);
+        if (runtime != null && capturedPcm != null) runtime.transcribe(capturedPcm);
+        else setState(State.CAPTURE_READY);
     }
 
     /**
@@ -155,6 +168,16 @@ public final class VoiceController {
         recorder.cancel();
         capturedPcm = null;
         segmenter.reset();
+        setState(State.IDLE);
+    }
+
+    /** Releases capture and recognizer resources when the IME is destroyed. */
+    public void destroy() {
+        ++permissionRequestGeneration;
+        recorder.cancel();
+        capturedPcm = null;
+        segmenter.reset();
+        if (runtime != null) runtime.destroy();
         setState(State.IDLE);
     }
 

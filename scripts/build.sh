@@ -6,5 +6,5 @@ if [[ ! -x "./gradlew" ]]; then
   exit 1
 fi
 
-echo "== CatBoard baseline Android debug build =="
-./gradlew --no-daemon :app:assembleDebug
+echo "== CatBoard alpha Android debug build =="
+./gradlew --no-daemon :app:assembleDebug :cleaner-companion:assembleDebug
