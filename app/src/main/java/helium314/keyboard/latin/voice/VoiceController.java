@@ -174,7 +174,7 @@ public final class VoiceController {
     /** Releases capture and recognizer resources when the IME is destroyed. */
     public void destroy() {
         ++permissionRequestGeneration;
-        recorder.release();
+        recorder.cancel();
         capturedPcm = null;
         segmenter.reset();
         if (runtime != null) runtime.destroy();
