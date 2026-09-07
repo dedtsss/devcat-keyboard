@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.latin.voice
 
+import android.content.Context
 import android.media.AudioFormat
 import android.view.inputmethod.InputConnection
+import androidx.test.core.app.ApplicationProvider
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import java.util.Collections
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 
@@ -160,14 +166,86 @@ class VoiceControllerTest {
         assertEquals(VoiceController.State.IDLE, controller.state)
     }
 
+    @Test fun enabledCleanupCommitsCleanedTranscript() {
+        val connection = mock(InputConnection::class.java)
+        `when`(connection.commitText("cleaned transcript", 1)).thenReturn(true)
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        OnlineCleanupPreferences.setEnabled(context, true)
+        val called = CountDownLatch(1)
+        val host = FakeHost(connection = connection, context = context, runPostedCallbacksImmediately = false)
+        val controller = VoiceController(host, FakeRecorder(), VadSegmenter.passthroughAdapter()) { _, _, _ ->
+            called.countDown()
+            "cleaned transcript"
+        }
+
+        controller.onLocalTranscript("local transcript")
+        assertTrue(called.await(1, TimeUnit.SECONDS))
+        host.drainPostedCallbacks()
+
+        org.mockito.Mockito.verify(connection).commitText("cleaned transcript", 1)
+        OnlineCleanupPreferences.setEnabled(context, false)
+        controller.destroy()
+    }
+
+    @Test fun disabledCleanupCommitsLocalTranscriptWithoutCallingClient() {
+        val connection = mock(InputConnection::class.java)
+        `when`(connection.commitText("local transcript", 1)).thenReturn(true)
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        OnlineCleanupPreferences.setEnabled(context, false)
+        val calls = AtomicInteger()
+        val host = FakeHost(connection = connection, context = context)
+        val controller = VoiceController(host, FakeRecorder(), VadSegmenter.passthroughAdapter()) { _, _, _ ->
+            calls.incrementAndGet()
+            "cleaned transcript"
+        }
+
+        controller.onLocalTranscript("local transcript")
+
+        assertEquals(0, calls.get())
+        org.mockito.Mockito.verify(connection).commitText("local transcript", 1)
+        controller.destroy()
+    }
+
+    @Test fun cleanupFailureFallsBackOnceAndLateResultAfterCancelIsIgnored() {
+        val connection = mock(InputConnection::class.java)
+        `when`(connection.commitText("local transcript", 1)).thenReturn(true)
+        `when`(connection.commitText("cleaned transcript", 1)).thenReturn(true)
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        OnlineCleanupPreferences.setEnabled(context, true)
+        val host = FakeHost(connection = connection, context = context, runPostedCallbacksImmediately = false)
+        val controller = VoiceController(host, FakeRecorder(), VadSegmenter.passthroughAdapter()) { _, _, _ -> null }
+
+        controller.onLocalTranscript("local transcript")
+        host.drainPostedCallbacks()
+        org.mockito.Mockito.verify(connection).commitText("local transcript", 1)
+
+        val lateHost = FakeHost(connection = connection, context = context, runPostedCallbacksImmediately = false)
+        val lateController = VoiceController(lateHost, FakeRecorder(), VadSegmenter.passthroughAdapter()) { _, _, _ ->
+            "cleaned transcript"
+        }
+        lateController.onLocalTranscript("local transcript")
+        lateController.cancel()
+        lateHost.drainPostedCallbacks()
+        org.mockito.Mockito.verify(connection, org.mockito.Mockito.times(0))
+            .commitText("cleaned transcript", 1)
+        OnlineCleanupPreferences.setEnabled(context, false)
+        controller.destroy()
+        lateController.destroy()
+    }
+
     private class FakeHost(
         var permissionGranted: Boolean = false,
         private val connection: InputConnection? = null,
         private val permissionRequestFailure: Boolean = false,
+        private val context: Context? = null,
+        private val runPostedCallbacksImmediately: Boolean = true,
     ) : VoiceController.Host {
         var permissionCallback: VoiceController.PermissionResultCallback? = null
         var permissionRequestCount = 0
         val states = mutableListOf<VoiceController.State>()
+        private val postedCallbacks = Collections.synchronizedList(mutableListOf<Runnable>())
+
+        override fun getVoiceContext() = context
 
         override fun hasMicrophonePermission() = permissionGranted
 
@@ -183,7 +261,18 @@ class VoiceControllerTest {
             states += state
         }
 
-        override fun postVoiceCallback(callback: Runnable) = callback.run()
+        override fun postVoiceCallback(callback: Runnable) {
+            if (runPostedCallbacksImmediately) callback.run() else postedCallbacks += callback
+        }
+
+        fun drainPostedCallbacks() {
+            val callbacks = synchronized(postedCallbacks) {
+                val copy = postedCallbacks.toList()
+                postedCallbacks.clear()
+                copy
+            }
+            callbacks.forEach(Runnable::run)
+        }
     }
 
     private class FakeRecorder(private val startSucceeds: Boolean = true) : PcmRecorder {

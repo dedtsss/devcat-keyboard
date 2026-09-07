@@ -29,6 +29,12 @@ grep -Fq 'OnlineCleanupPreferences.getMode' app/src/main/java/helium314/keyboard
 grep -Fq 'CLEANUP_DEADLINE_MS = 2_500L' app/src/main/java/helium314/keyboard/latin/voice/VoiceController.java
 grep -Fq 'connectTimeout = 2_000' cleaner-companion/src/main/java/devcat/catboard/cleaner/TranscriptCleanerService.kt
 grep -Fq 'readTimeout = 5_000' cleaner-companion/src/main/java/devcat/catboard/cleaner/TranscriptCleanerService.kt
+grep -Fq 'helium314.keyboard' cleaner-companion/src/main/java/devcat/catboard/cleaner/TranscriptCleanerService.kt
+grep -Fq 'helium314.keyboard.debug' cleaner-companion/src/main/java/devcat/catboard/cleaner/TranscriptCleanerService.kt
+if grep -Fq 'devcat.catboard.debug' cleaner-companion/src/main/java/devcat/catboard/cleaner/TranscriptCleanerService.kt; then
+  echo "Cleaner caller allowlist must use the declared keyboard application IDs" >&2
+  exit 1
+fi
 grep -Fq 'it == VOICE' app/src/main/java/helium314/keyboard/latin/utils/ToolbarUtils.kt
 
 if grep -Fq 'android.permission.INTERNET' "$app_manifest"; then

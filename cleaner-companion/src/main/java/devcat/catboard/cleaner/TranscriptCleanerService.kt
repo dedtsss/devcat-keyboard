@@ -48,10 +48,16 @@ class TranscriptCleanerService : Service() {
 
     private fun enforceAllowedCaller() {
         val packages = packageManager.getPackagesForUid(Binder.getCallingUid()).orEmpty().toSet()
-        check(packages.any { it == "devcat.catboard" || it == "devcat.catboard.debug" }) {
+        check(CleanerCallerAllowlist.isAllowed(packages)) {
             "Unexpected cleaner caller"
         }
     }
+}
+
+internal object CleanerCallerAllowlist {
+    private val allowedPackages = setOf("helium314.keyboard", "helium314.keyboard.debug")
+
+    fun isAllowed(packages: Set<String>): Boolean = packages.any(allowedPackages::contains)
 }
 
 internal const val CLEANER_PREFS = "gigachat_cleaner"
