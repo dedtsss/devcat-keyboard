@@ -11,7 +11,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -27,6 +26,39 @@ public final class VoiceController {
     interface CleanupClient {
         @Nullable String clean(@NonNull Context context, @NonNull String transcript,
                 @NonNull String mode);
+    }
+
+    interface CleanupScheduler {
+        @NonNull CleanupTask schedule(@NonNull Runnable task, long delayMs);
+        void execute(@NonNull Runnable task);
+        void shutdown();
+    }
+
+    interface CleanupTask {
+        void cancel();
+    }
+
+    private static final class ExecutorCleanupScheduler implements CleanupScheduler {
+        private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(2, runnable -> {
+            final Thread thread = new Thread(runnable, "catboard-online-cleanup");
+            thread.setDaemon(true);
+            return thread;
+        });
+
+        @NonNull
+        @Override public CleanupTask schedule(@NonNull final Runnable task, final long delayMs) {
+            final java.util.concurrent.ScheduledFuture<?> future =
+                    executor.schedule(task, delayMs, TimeUnit.MILLISECONDS);
+            return () -> future.cancel(false);
+        }
+
+        @Override public void execute(@NonNull final Runnable task) {
+            executor.execute(task);
+        }
+
+        @Override public void shutdown() {
+            executor.shutdownNow();
+        }
     }
     public enum State {
         IDLE,
@@ -61,11 +93,11 @@ public final class VoiceController {
     @Nullable private final VoiceRuntime runtime;
     @Nullable private final Context voiceContext;
     private final CleanupClient cleanupClient;
-    private final ScheduledExecutorService cleanupExecutor;
+    private final CleanupScheduler cleanupScheduler;
     private long cleanupGeneration;
     private boolean cleanupSettled = true;
     private boolean destroyed;
-    @Nullable private ScheduledFuture<?> cleanupFallback;
+    @Nullable private CleanupTask cleanupFallback;
 
     public VoiceController(@NonNull final Host host) {
         this(host, new AndroidPcmRecorder());
@@ -77,11 +109,17 @@ public final class VoiceController {
 
     VoiceController(@NonNull final Host host, @NonNull final PcmRecorder recorder,
             @NonNull final VadSegmenter.Adapter vadAdapter) {
-        this(host, recorder, vadAdapter, OnlineCleanupClient::clean);
+        this(host, recorder, vadAdapter, OnlineCleanupClient::clean, new ExecutorCleanupScheduler());
     }
 
     VoiceController(@NonNull final Host host, @NonNull final PcmRecorder recorder,
             @NonNull final VadSegmenter.Adapter vadAdapter, @NonNull final CleanupClient cleanupClient) {
+        this(host, recorder, vadAdapter, cleanupClient, new ExecutorCleanupScheduler());
+    }
+
+    VoiceController(@NonNull final Host host, @NonNull final PcmRecorder recorder,
+            @NonNull final VadSegmenter.Adapter vadAdapter, @NonNull final CleanupClient cleanupClient,
+            @NonNull final CleanupScheduler cleanupScheduler) {
         this.host = host;
         this.recorder = recorder;
         this.segmenter = new VadSegmenter(vadAdapter, AndroidPcmRecorder.MAX_CAPTURE_BYTES, 1,
@@ -89,11 +127,7 @@ public final class VoiceController {
         final Context context = host.getVoiceContext();
         voiceContext = context;
         this.cleanupClient = cleanupClient;
-        cleanupExecutor = Executors.newScheduledThreadPool(2, runnable -> {
-            final Thread thread = new Thread(runnable, "catboard-online-cleanup");
-            thread.setDaemon(true);
-            return thread;
-        });
+        this.cleanupScheduler = cleanupScheduler;
         runtime = context == null ? null : new VoiceRuntime(context, new VoiceRuntime.Listener() {
             @Override public void onRecordingStarted() { }
             @Override public void onTranscribing() { setState(State.FINALIZING_CAPTURE); }
@@ -185,10 +219,10 @@ public final class VoiceController {
         }
         final long generation = ++cleanupGeneration;
         cleanupSettled = false;
-        cleanupFallback = cleanupExecutor.schedule(
+        cleanupFallback = cleanupScheduler.schedule(
                 () -> host.postVoiceCallback(() -> finishCleanup(generation, transcript, null)),
-                CLEANUP_DEADLINE_MS, TimeUnit.MILLISECONDS);
-        cleanupExecutor.execute(() -> {
+                CLEANUP_DEADLINE_MS);
+        cleanupScheduler.execute(() -> {
             String cleaned = null;
             try {
                 cleaned = cleanupClient.clean(context, transcript,
@@ -251,7 +285,7 @@ public final class VoiceController {
         capturedPcm = null;
         segmenter.reset();
         if (runtime != null) runtime.destroy();
-        cleanupExecutor.shutdownNow();
+        cleanupScheduler.shutdown();
         setState(State.IDLE);
     }
 

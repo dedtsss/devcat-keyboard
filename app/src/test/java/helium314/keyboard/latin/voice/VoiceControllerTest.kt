@@ -10,12 +10,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import java.util.Collections
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class VoiceControllerTest {
     @Test fun permissionDenialReturnsToIdle() {
         val host = FakeHost()
@@ -171,15 +172,15 @@ class VoiceControllerTest {
         `when`(connection.commitText("cleaned transcript", 1)).thenReturn(true)
         val context = ApplicationProvider.getApplicationContext<Context>()
         OnlineCleanupPreferences.setEnabled(context, true)
-        val called = CountDownLatch(1)
+        val calls = AtomicInteger()
         val host = FakeHost(connection = connection, context = context, runPostedCallbacksImmediately = false)
-        val controller = VoiceController(host, FakeRecorder(), VadSegmenter.passthroughAdapter()) { _, _, _ ->
-            called.countDown()
+        val controller = VoiceController(host, FakeRecorder(), VadSegmenter.passthroughAdapter(), { _, _, _ ->
+            calls.incrementAndGet()
             "cleaned transcript"
-        }
+        }, FakeCleanupScheduler())
 
         controller.onLocalTranscript("local transcript")
-        assertTrue(called.await(1, TimeUnit.SECONDS))
+        assertEquals(1, calls.get())
         host.drainPostedCallbacks()
 
         org.mockito.Mockito.verify(connection).commitText("cleaned transcript", 1)
@@ -194,10 +195,10 @@ class VoiceControllerTest {
         OnlineCleanupPreferences.setEnabled(context, false)
         val calls = AtomicInteger()
         val host = FakeHost(connection = connection, context = context)
-        val controller = VoiceController(host, FakeRecorder(), VadSegmenter.passthroughAdapter()) { _, _, _ ->
+        val controller = VoiceController(host, FakeRecorder(), VadSegmenter.passthroughAdapter(), { _, _, _ ->
             calls.incrementAndGet()
             "cleaned transcript"
-        }
+        }, FakeCleanupScheduler())
 
         controller.onLocalTranscript("local transcript")
 
@@ -213,16 +214,16 @@ class VoiceControllerTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         OnlineCleanupPreferences.setEnabled(context, true)
         val host = FakeHost(connection = connection, context = context, runPostedCallbacksImmediately = false)
-        val controller = VoiceController(host, FakeRecorder(), VadSegmenter.passthroughAdapter()) { _, _, _ -> null }
+        val controller = VoiceController(host, FakeRecorder(), VadSegmenter.passthroughAdapter(), { _, _, _ -> null }, FakeCleanupScheduler())
 
         controller.onLocalTranscript("local transcript")
         host.drainPostedCallbacks()
         org.mockito.Mockito.verify(connection).commitText("local transcript", 1)
 
         val lateHost = FakeHost(connection = connection, context = context, runPostedCallbacksImmediately = false)
-        val lateController = VoiceController(lateHost, FakeRecorder(), VadSegmenter.passthroughAdapter()) { _, _, _ ->
+        val lateController = VoiceController(lateHost, FakeRecorder(), VadSegmenter.passthroughAdapter(), { _, _, _ ->
             "cleaned transcript"
-        }
+        }, FakeCleanupScheduler())
         lateController.onLocalTranscript("local transcript")
         lateController.cancel()
         lateHost.drainPostedCallbacks()
@@ -272,6 +273,24 @@ class VoiceControllerTest {
                 copy
             }
             callbacks.forEach(Runnable::run)
+        }
+    }
+
+    private class FakeCleanupScheduler : VoiceController.CleanupScheduler {
+        private val delayedTasks = mutableListOf<Runnable>()
+
+        override fun schedule(task: Runnable, delayMs: Long): VoiceController.CleanupTask {
+            delayedTasks += task
+            return VoiceController.CleanupTask { delayedTasks.remove(task) }
+        }
+
+        override fun execute(task: Runnable) = task.run()
+
+        override fun shutdown() = delayedTasks.clear()
+
+        fun runDelayedTasks() {
+            delayedTasks.toList().forEach(Runnable::run)
+            delayedTasks.clear()
         }
     }
 
