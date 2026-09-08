@@ -239,7 +239,7 @@ public final class VoiceController {
             @Nullable final String cleanedTranscript) {
         if (generation != cleanupGeneration || cleanupSettled) return;
         cleanupSettled = true;
-        if (cleanupFallback != null) cleanupFallback.cancel(false);
+        if (cleanupFallback != null) cleanupFallback.cancel();
         final String candidate = cleanedTranscript == null || cleanedTranscript.trim().isEmpty()
                 ? localTranscript : cleanedTranscript;
         commitTranscript(candidate);
@@ -292,7 +292,7 @@ public final class VoiceController {
     private void invalidateCleanup() {
         ++cleanupGeneration;
         cleanupSettled = true;
-        if (cleanupFallback != null) cleanupFallback.cancel(false);
+        if (cleanupFallback != null) cleanupFallback.cancel();
         cleanupFallback = null;
     }
 
