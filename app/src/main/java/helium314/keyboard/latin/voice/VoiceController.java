@@ -5,9 +5,14 @@
 package helium314.keyboard.latin.voice;
 
 import android.view.inputmethod.InputConnection;
+import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Owns the internal voice-action state boundary.
@@ -16,6 +21,45 @@ import androidx.annotation.Nullable;
  * not live here.
  */
 public final class VoiceController {
+    static final long CLEANUP_DEADLINE_MS = 2_500L;
+
+    interface CleanupClient {
+        @Nullable String clean(@NonNull Context context, @NonNull String transcript,
+                @NonNull String mode);
+    }
+
+    interface CleanupScheduler {
+        @NonNull CleanupTask schedule(@NonNull Runnable task, long delayMs);
+        void execute(@NonNull Runnable task);
+        void shutdown();
+    }
+
+    interface CleanupTask {
+        void cancel();
+    }
+
+    private static final class ExecutorCleanupScheduler implements CleanupScheduler {
+        private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(2, runnable -> {
+            final Thread thread = new Thread(runnable, "catboard-online-cleanup");
+            thread.setDaemon(true);
+            return thread;
+        });
+
+        @NonNull
+        @Override public CleanupTask schedule(@NonNull final Runnable task, final long delayMs) {
+            final java.util.concurrent.ScheduledFuture<?> future =
+                    executor.schedule(task, delayMs, TimeUnit.MILLISECONDS);
+            return () -> future.cancel(false);
+        }
+
+        @Override public void execute(@NonNull final Runnable task) {
+            executor.execute(task);
+        }
+
+        @Override public void shutdown() {
+            executor.shutdownNow();
+        }
+    }
     public enum State {
         IDLE,
         REQUESTING_PERMISSION,
@@ -30,6 +74,8 @@ public final class VoiceController {
     }
 
     public interface Host {
+        /** Context used only to initialize the embedded offline recognizer. */
+        @Nullable default Context getVoiceContext() { return null; }
         boolean hasMicrophonePermission();
         void requestMicrophonePermission(@NonNull PermissionResultCallback callback);
         @Nullable InputConnection getVoiceInputConnection();
@@ -44,6 +90,14 @@ public final class VoiceController {
     private String recoverableTranscript;
     private byte[] capturedPcm;
     private int permissionRequestGeneration;
+    @Nullable private final VoiceRuntime runtime;
+    @Nullable private final Context voiceContext;
+    private final CleanupClient cleanupClient;
+    private final CleanupScheduler cleanupScheduler;
+    private long cleanupGeneration;
+    private boolean cleanupSettled = true;
+    private boolean destroyed;
+    @Nullable private CleanupTask cleanupFallback;
 
     public VoiceController(@NonNull final Host host) {
         this(host, new AndroidPcmRecorder());
@@ -55,10 +109,32 @@ public final class VoiceController {
 
     VoiceController(@NonNull final Host host, @NonNull final PcmRecorder recorder,
             @NonNull final VadSegmenter.Adapter vadAdapter) {
+        this(host, recorder, vadAdapter, OnlineCleanupClient::clean, new ExecutorCleanupScheduler());
+    }
+
+    VoiceController(@NonNull final Host host, @NonNull final PcmRecorder recorder,
+            @NonNull final VadSegmenter.Adapter vadAdapter, @NonNull final CleanupClient cleanupClient) {
+        this(host, recorder, vadAdapter, cleanupClient, new ExecutorCleanupScheduler());
+    }
+
+    VoiceController(@NonNull final Host host, @NonNull final PcmRecorder recorder,
+            @NonNull final VadSegmenter.Adapter vadAdapter, @NonNull final CleanupClient cleanupClient,
+            @NonNull final CleanupScheduler cleanupScheduler) {
         this.host = host;
         this.recorder = recorder;
         this.segmenter = new VadSegmenter(vadAdapter, AndroidPcmRecorder.MAX_CAPTURE_BYTES, 1,
                 pcm -> capturedPcm = pcm);
+        final Context context = host.getVoiceContext();
+        voiceContext = context;
+        this.cleanupClient = cleanupClient;
+        this.cleanupScheduler = cleanupScheduler;
+        runtime = context == null ? null : new VoiceRuntime(context, new VoiceRuntime.Listener() {
+            @Override public void onRecordingStarted() { }
+            @Override public void onTranscribing() { setState(State.FINALIZING_CAPTURE); }
+            @Override public void onTranscript(@NonNull final String text) { onLocalTranscript(text); }
+            @Override public void onNoSpeech() { setState(State.IDLE); }
+            @Override public void onFailure() { setState(State.ERROR); }
+        });
     }
 
     /** Handles the toolbar microphone action without switching to another IME. */
@@ -122,13 +198,54 @@ public final class VoiceController {
         segmenter.reset();
         segmenter.accept(result.getPcm());
         segmenter.finish();
-        setState(State.CAPTURE_READY);
+        if (runtime != null && capturedPcm != null) runtime.transcribe(capturedPcm);
+        else setState(State.CAPTURE_READY);
     }
 
     /**
      * Future local-ASR delivery seam. Failed commits keep the transcript available for recovery.
      */
     public boolean deliverTranscript(@Nullable final CharSequence transcript) {
+        invalidateCleanup();
+        return commitTranscript(transcript);
+    }
+
+    void onLocalTranscript(@NonNull final String transcript) {
+        if (destroyed) return;
+        final Context context = voiceContext;
+        if (context == null || !OnlineCleanupPreferences.isEnabled(context)) {
+            commitTranscript(transcript);
+            return;
+        }
+        final long generation = ++cleanupGeneration;
+        cleanupSettled = false;
+        cleanupFallback = cleanupScheduler.schedule(
+                () -> host.postVoiceCallback(() -> finishCleanup(generation, transcript, null)),
+                CLEANUP_DEADLINE_MS);
+        cleanupScheduler.execute(() -> {
+            String cleaned = null;
+            try {
+                cleaned = cleanupClient.clean(context, transcript,
+                        OnlineCleanupPreferences.getMode(context));
+            } catch (RuntimeException ignored) {
+                // The local transcript is the required fallback for every cleanup failure.
+            }
+            final String result = cleaned;
+            host.postVoiceCallback(() -> finishCleanup(generation, transcript, result));
+        });
+    }
+
+    private void finishCleanup(final long generation, @NonNull final String localTranscript,
+            @Nullable final String cleanedTranscript) {
+        if (generation != cleanupGeneration || cleanupSettled) return;
+        cleanupSettled = true;
+        if (cleanupFallback != null) cleanupFallback.cancel();
+        final String candidate = cleanedTranscript == null || cleanedTranscript.trim().isEmpty()
+                ? localTranscript : cleanedTranscript;
+        commitTranscript(candidate);
+    }
+
+    private boolean commitTranscript(@Nullable final CharSequence transcript) {
         if (transcript == null || transcript.toString().trim().isEmpty()) return false;
         recoverableTranscript = transcript.toString();
         final InputConnection connection = host.getVoiceInputConnection();
@@ -152,10 +269,31 @@ public final class VoiceController {
 
     public void cancel() {
         ++permissionRequestGeneration;
+        invalidateCleanup();
         recorder.cancel();
         capturedPcm = null;
         segmenter.reset();
         setState(State.IDLE);
+    }
+
+    /** Releases capture and recognizer resources when the IME is destroyed. */
+    public void destroy() {
+        destroyed = true;
+        ++permissionRequestGeneration;
+        invalidateCleanup();
+        recorder.cancel();
+        capturedPcm = null;
+        segmenter.reset();
+        if (runtime != null) runtime.destroy();
+        cleanupScheduler.shutdown();
+        setState(State.IDLE);
+    }
+
+    private void invalidateCleanup() {
+        ++cleanupGeneration;
+        cleanupSettled = true;
+        if (cleanupFallback != null) cleanupFallback.cancel();
+        cleanupFallback = null;
     }
 
     @NonNull

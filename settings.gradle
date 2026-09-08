@@ -1,2 +1,3 @@
 include ':app'
+include ':cleaner-companion'
 include ':tools:make-emoji-keys'

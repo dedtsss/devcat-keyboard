@@ -2,6 +2,8 @@ name: check
 
 on:
   push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
 
@@ -12,6 +14,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Test and package the submitted commit itself, not GitHub's synthetic PR merge ref.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -36,8 +41,30 @@ jobs:
       - name: Run lightweight source preflight
         run: ./scripts/check.sh
 
-      - name: Run baseline unit tests
+      - name: Prepare offline voice runtime
+        run: ./scripts/prepare-voice-runtime.sh
+
+      - name: Run Android unit tests
         run: ./scripts/test.sh
 
-      - name: Build baseline debug APK
+      - name: Build CatBoard and cleaner companion debug APKs
         run: ./scripts/build.sh
+
+      - name: Verify installable debug APKs
+        run: |
+          test -s app/build/outputs/apk/debug/HeliBoard_*-debug.apk
+          test -s cleaner-companion/build/outputs/apk/debug/cleaner-companion-debug.apk
+
+      - name: Upload CatBoard keyboard debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: catboard-keyboard-debug-${{ github.sha }}
+          path: app/build/outputs/apk/debug/HeliBoard_*-debug.apk
+          if-no-files-found: error
+
+      - name: Upload cleaner companion debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: catboard-cleaner-companion-debug-${{ github.sha }}
+          path: cleaner-companion/build/outputs/apk/debug/cleaner-companion-debug.apk
+          if-no-files-found: error

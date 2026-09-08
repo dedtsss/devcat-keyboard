@@ -27,6 +27,11 @@ Audio from normal offline dictation is not uploaded.
 
 ## Optional online cleanup
 
+The user must explicitly enable cleanup in CatBoard settings. The companion credential is
+configured only in the companion launcher and stored in its private, non-backup preferences;
+it is not placed in keyboard preferences, IPC payloads, logs, or documentation. The bounded
+IPC payload remains dictated transcript plus selected mode.
+
 Preferred design uses a **separate companion Android package** with network permission.
 
 The keyboard explicitly invokes the companion only for the specific dictated text the user has configured/asked to clean.

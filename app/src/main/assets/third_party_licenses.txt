@@ -1,0 +1,18 @@
+CatBoard offline voice runtime provenance
+
+sherpa-onnx 1.13.0
+License: Apache-2.0
+Source: https://github.com/k2-fsa/sherpa-onnx
+Artifact: https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.0/sherpa-onnx-1.13.0.aar
+SHA-256: 28e9b348736d84b610361daf161f5904440d6d516531e896bf9ee8b0ad02764e
+
+GigaAM v3 E2E RNNT model
+License: MIT
+Source: https://github.com/salute-developers/GigaAM
+Assets are fetched in CI by scripts/prepare-voice-runtime.sh and copied into the APK.
+
+Silero VAD model
+License: MIT (upstream model provenance)
+Source: https://github.com/snakers4/silero-vad
+Pinned asset source: https://raw.githubusercontent.com/dedtsss/govorun-online-cleaner/663af0b6283fe642c68c260749d5d15c654ec4c1/app/src/main/assets/silero_vad.onnx
+SHA-256: 9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6

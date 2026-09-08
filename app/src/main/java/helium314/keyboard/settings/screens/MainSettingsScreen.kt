@@ -35,6 +35,7 @@ fun MainSettingsScreen(
     onClickTextCorrection: () -> Unit,
     onClickPreferences: () -> Unit,
     onClickToolbar: () -> Unit,
+    onClickOnlineCleanup: () -> Unit,
     onClickGestureTyping: () -> Unit,
     onClickDataGathering: () -> Unit,
     onClickAdvanced: () -> Unit,
@@ -74,6 +75,11 @@ fun MainSettingsScreen(
                     name = stringResource(R.string.settings_screen_toolbar),
                     onClick = onClickToolbar,
                     icon = R.drawable.ic_settings_toolbar
+                ) { NextScreenIcon() }
+                Preference(
+                    name = stringResource(R.string.catboard_online_cleanup),
+                    description = stringResource(R.string.catboard_online_cleanup_summary),
+                    onClick = onClickOnlineCleanup
                 ) { NextScreenIcon() }
                 if (JniUtils.sHaveGestureLib)
                     Preference(
@@ -124,7 +130,7 @@ private fun PreviewScreen() {
     initPreview(LocalContext.current)
     Theme(previewDark) {
         Surface {
-            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
         }
     }
 }

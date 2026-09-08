@@ -32,6 +32,7 @@ import helium314.keyboard.settings.screens.SecondaryLayoutScreen
 import helium314.keyboard.settings.screens.SubtypeScreen
 import helium314.keyboard.settings.screens.TextCorrectionScreen
 import helium314.keyboard.settings.screens.ToolbarScreen
+import helium314.keyboard.settings.screens.OnlineCleanupScreen
 import helium314.keyboard.settings.screens.gesturedata.GestureDataScreen
 import helium314.keyboard.settings.screens.gesturedata.ReviewScreen
 import kotlinx.coroutines.CoroutineScope
@@ -71,6 +72,7 @@ fun SettingsNavHost(
                 onClickTextCorrection = { navController.navigate(SettingsDestination.TextCorrection) },
                 onClickPreferences = { navController.navigate(SettingsDestination.Preferences) },
                 onClickToolbar = { navController.navigate(SettingsDestination.Toolbar) },
+                onClickOnlineCleanup = { navController.navigate(SettingsDestination.OnlineCleanup) },
                 onClickGestureTyping = { navController.navigate(SettingsDestination.GestureTyping) },
                 onClickDataGathering = { navController.navigate(SettingsDestination.DataGathering) },
                 onClickAdvanced = { navController.navigate(SettingsDestination.Advanced) },
@@ -93,6 +95,7 @@ fun SettingsNavHost(
         composable(SettingsDestination.Toolbar) {
             ToolbarScreen(onClickBack = ::goBack)
         }
+        composable(SettingsDestination.OnlineCleanup) { OnlineCleanupScreen(onClickBack = ::goBack) }
         composable(SettingsDestination.GestureTyping) {
             GestureTypingScreen(onClickBack = ::goBack)
         }
@@ -150,6 +153,7 @@ object SettingsDestination {
     const val TextCorrection = "text_correction"
     const val Preferences = "preferences"
     const val Toolbar = "toolbar"
+    const val OnlineCleanup = "online_cleanup"
     const val GestureTyping = "gesture_typing"
     const val DataGathering = "data_gathering" // remove when data gathering phase is done (end of 2026 latest)
     const val DataReview = "data_review" // remove when data gathering phase is done (end of 2026 latest)

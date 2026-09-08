@@ -698,7 +698,7 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onDestroy() {
-        if (mVoiceController != null) mVoiceController.cancel();
+        if (mVoiceController != null) mVoiceController.destroy();
         mClipboardHistoryManager.onDestroy();
         mDictionaryFacilitator.closeDictionaries();
         mSettings.onDestroy();
@@ -843,6 +843,9 @@ public class LatinIME extends InputMethodService implements
     }
 
     private void onStartInputInternal(final EditorInfo editorInfo, final boolean restarting) {
+        // A new editor invalidates the InputConnection captured by a voice session.
+        // Cancel before switching context so a late transcript cannot target the new field.
+        if (mVoiceController != null) mVoiceController.cancel();
         super.onStartInput(editorInfo, restarting);
 
         final RichInputMethodSubtype subtypeForApp = editorInfo == null
@@ -1048,6 +1051,7 @@ public class LatinIME extends InputMethodService implements
     }
 
     void onFinishInputViewInternal(final boolean finishingInput) {
+        if (mVoiceController != null) mVoiceController.cancel();
         super.onFinishInputView(finishingInput);
         Log.i(TAG, "onFinishInputView");
         cleanupInternalStateForFinishInput();
@@ -1435,6 +1439,11 @@ public class LatinIME extends InputMethodService implements
                         mKeyboardSwitcher.getCurrentKeyboardScript(), mHandler);
         updateStateAfterInputTransaction(completeInputTransaction);
         mKeyboardSwitcher.onEvent(event, getCurrentAutoCapsState(), getCurrentRecapitalizeState());
+    }
+
+    @Override
+    public android.content.Context getVoiceContext() {
+        return this;
     }
 
     @Override
