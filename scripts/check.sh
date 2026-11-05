@@ -47,11 +47,16 @@ for script in scripts/*.sh; do
   bash -n "$script"
 done
 
+bash ./scripts/check-package-boundary.sh
+
 if ! grep -Fq 'run: ./scripts/test.sh' .github/workflows/check.yml ||
    ! grep -Fq 'run: ./scripts/build.sh' .github/workflows/check.yml; then
   echo "GitHub Actions check must run the real Android test and build scripts." >&2
   exit 1
 fi
+grep -Fq 'ref: ${{ github.event.pull_request.head.sha || github.sha }}' .github/workflows/check.yml
+grep -Fq 'name: catboard-keyboard-debug-${{ github.sha }}' .github/workflows/check.yml
+grep -Fq 'name: catboard-cleaner-companion-debug-${{ github.sha }}' .github/workflows/check.yml
 
 echo "HeliBoard baseline structure, provenance, wrapper pin, and shell syntax are valid."
 echo "CatBoard lightweight check completed (Android build/test run in GitHub Actions)."

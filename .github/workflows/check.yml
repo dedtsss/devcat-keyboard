@@ -2,8 +2,16 @@ name: check
 
 on:
   push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
+    inputs:
+      publish_debug_apks:
+        description: Опубликовать debug APK для ручной передачи
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   check:
@@ -12,6 +20,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Test and package the submitted commit itself, not GitHub's synthetic PR merge ref.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -36,8 +47,48 @@ jobs:
       - name: Run lightweight source preflight
         run: ./scripts/check.sh
 
-      - name: Run baseline unit tests
+      - name: Prepare offline voice runtime
+        run: ./scripts/prepare-voice-runtime.sh
+
+      - name: Run Android unit tests
         run: ./scripts/test.sh
 
-      - name: Build baseline debug APK
+      - name: Build CatBoard and cleaner companion debug APKs
         run: ./scripts/build.sh
+
+      - name: Verify installable debug APKs
+        run: |
+          test -s app/build/outputs/apk/debug/HeliBoard_*-debug.apk
+          test -s cleaner-companion/build/outputs/apk/debug/cleaner-companion-debug.apk
+
+      - name: Enforce 320 MiB total APK artifact limit
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_debug_apks
+        run: |
+          max_bytes=$((320 * 1024 * 1024))
+          total_bytes=0
+          for apk in app/build/outputs/apk/debug/HeliBoard_*-debug.apk cleaner-companion/build/outputs/apk/debug/cleaner-companion-debug.apk; do
+            size=$(stat -c %s "$apk")
+            total_bytes=$((total_bytes + size))
+          done
+          if [ "$total_bytes" -gt "$max_bytes" ]; then
+            echo "Combined debug APKs exceed the 320 MiB CI artifact limit: ${total_bytes} bytes" >&2
+            exit 1
+          fi
+
+      - name: Upload CatBoard keyboard debug APK
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_debug_apks
+        uses: actions/upload-artifact@v4
+        with:
+          name: catboard-keyboard-debug-${{ github.sha }}
+          path: app/build/outputs/apk/debug/HeliBoard_*-debug.apk
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload cleaner companion debug APK
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_debug_apks
+        uses: actions/upload-artifact@v4
+        with:
+          name: catboard-cleaner-companion-debug-${{ github.sha }}
+          path: cleaner-companion/build/outputs/apk/debug/cleaner-companion-debug.apk
+          if-no-files-found: error
+          retention-days: 1

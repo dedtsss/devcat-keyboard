@@ -42,6 +42,9 @@ Status: candidate
 Ограничение:
 Не превращать MVP в универсальный AI-gateway. Сначала один рабочий provider.
 
+Stage E now has the first concrete seam: the network provider is isolated in
+`cleaner-companion`; provider settings UI and a second provider remain future work.
+
 ## 2026-08-18 — Optional cloud ASR
 Status: candidate
 
@@ -90,3 +93,6 @@ Status: candidate
 Если в ходе форка появятся исправления, полезные обычному HeliBoard и не завязанные на CatBoard-specific voice stack, рассматривать небольшой upstream PR вместо вечного локального патча.
 
 Польза: меньше divergence и проще обновлять базу.
+Audit follow-up recorded: physical device, airplane-mode, installed IPC and approved-provider
+smoke remain evidence work after the corrective source checkpoint; do not treat static checks
+as end-user acceptance.

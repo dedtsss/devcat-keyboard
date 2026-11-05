@@ -57,3 +57,16 @@ arm64-only is acceptable for the first integrated voice prototype. This does **n
 ## Secrets
 
 Online-cleanup credentials are not required for local ASR and must not be committed. Follow `docs/standards/secrets-policy.md`.
+## Alpha online-cleanup setup
+
+Install `cleaner-companion-debug.apk` first and `CatBoard_*debug.apk` second from the same
+build/signing identity. Open CatBoard settings, choose Online transcript cleanup, enable it,
+and tap Cleanup mode to cycle Light, Normal, and Clean. Open CatBoard Cleaner from the
+launcher to enter, Save, or Clear the provider Authorization Key; it remains in companion
+private storage and is never passed to the keyboard.
+
+With cleanup disabled, without the companion, or in airplane mode, local offline dictation
+must still commit its transcript. The keyboard keeps no INTERNET permission. Remaining
+physical checklist: install both APKs, verify mic start/stop and editor focus/hide/show,
+airplane-mode dictation, cleanup timeout fallback, and (only with an approved key) live
+provider cleanup. These are device/provider evidence, not local-build evidence.
